@@ -13,7 +13,7 @@
 -------
 ### 📚 GUIDE TOC:
 
-#### 📌 Version 1.0.0
+#### 📌 [Version 1.0.0](./example/v1.0.0/documentation/README.md)
 - 1. Basic Understanding and Setup
     - 1.1 Let's make a module
         - 1. Create a Basic Module
