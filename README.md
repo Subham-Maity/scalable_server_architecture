@@ -1,6 +1,8 @@
 # ! NestJS 🔥
 
-**The best way to develop high-quality and reliable scalable APIs - with proper documentation and testing using NestJS and modern technologies like Prisma, TypeORM, Passport, JWT, Pactum, and more.**
+**The best way to develop high-quality and reliable scalable APIs—with proper documentation and testing using NestJS and modern technologies like Prisma, TypeORM, Passport, JWT, Pactum, and more.**
+
+> _Note:_ These bookmarks are only meant for testing purposes, and you can easily change this part to the desired features at any time you wish.
 
 ```markdown
 📂 example
@@ -80,3 +82,7 @@
         - 18.2.4 Pactum Test for Edit User
 > **⭐ Let's Revise the concepts and implement bookmarks [CRUD]**
 - 19. Bookmarks Crud with Testing E2E
+
+### 📚 GUIDE TOC:
+
+#### 📌 [Version 1.0.0](package/v1.0.1/documentation/README.md)

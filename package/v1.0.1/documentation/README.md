@@ -6,9 +6,6 @@
 
 - [1. MongoDB Setup](#1-mongodb-setup)
 
-
-
-
 ### 1. MongoDB Setup
 > postgresql to mongodb migration guide
 > 
@@ -16,5 +13,5 @@
 
 - And because id is string so I need to change the type of id from `Int` to `String` in `schema.prisma` file also in all controllers and services.
 
-⇨ **Check This Commit**: [Check Here The Difference]()
-**Note:** These are the all steps to change the database from postgresql to mongodb.
+⇨ **Check This Commit**: [**_Check Here The Difference_**](https://github.com/Subham-Maity/scalable_server_architecture/commit/8a4bbdb5b5bda9c55537287494ae78daafb04017?diff=split&w=1)
+- **Note:** These are the all steps to change the database from postgresql to mongodb.
