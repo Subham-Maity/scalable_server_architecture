@@ -5,7 +5,7 @@ import { asyncErrorHandler } from '../errors/async-error-handler';
 
 @Injectable()
 export class UserService {
-  editUser = asyncErrorHandler(async (userId: number, dto: EditUserDto) => {
+  editUser = asyncErrorHandler(async (userId: string, dto: EditUserDto) => {
     const user = await this.prisma.user.update({
       where: {
         id: userId,

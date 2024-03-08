@@ -1,22 +1,21 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
 generator client {
   provider = "prisma-client-js"
 }
 
 datasource db {
-  provider = "postgresql"
+  provider = "mongodb"
   url      = env("DATABASE_URL")
 }
 
 model User {
-  id        Int      @id @default(autoincrement())
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
   email String @unique
   hash  String
+
+  refreshTokenHash String?
 
   firstName String?
   lastName  String?
@@ -27,7 +26,7 @@ model User {
 }
 
 model Bookmark {
-  id        Int      @id @default(autoincrement())
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
@@ -35,8 +34,8 @@ model Bookmark {
   description String?
   link        String
 
-  userId Int
-  user   User @relation(fields: [userId], references: [id])
+  userId String @db.ObjectId
+  user   User   @relation(fields: [userId], references: [id])
 
   @@map("bookmarks")
 }

@@ -1,8 +1,10 @@
 *First run the docker daemon* 
 
 
-- If you want to migrate `npx prisma migrate dev`
 
+> If you want to migrate `npx prisma migrate dev`
+
+- First run the docker daemon
 
 ```bash
 
