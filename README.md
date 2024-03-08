@@ -8,7 +8,7 @@
 
 ```markdown
 📂 example
-    └───v1.0.0
+    └───v1.0.0 [focus: basic structure, passport auth,basic dto, db setup,testing environment]
         ├───app - the main application version 1.0.0
         └───documentation - the documentation for the main application version 1.0.0
 ``` 

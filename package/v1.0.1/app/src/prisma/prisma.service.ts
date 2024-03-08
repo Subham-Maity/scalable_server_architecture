@@ -28,8 +28,4 @@ export class PrismaService extends PrismaClient implements OnModuleInit, OnModul
     // teardown logic
     return Promise.all([this.user.deleteMany()]);
   }
-  cleanDb() {
-    //For bookmarks
-    return this.$transaction([this.bookmark.deleteMany(), this.user.deleteMany()]);
-  }
 }

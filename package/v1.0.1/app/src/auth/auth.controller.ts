@@ -6,14 +6,24 @@ import { AuthDto } from './dto';
 export class AuthController {
   constructor(private authService: AuthService) {}
 
-  @Post('signup')
-  signup(@Body() dto: AuthDto) {
-    return this.authService.signup(dto);
+  @Post('/local/signup')
+  signupLocal(@Body() dto: AuthDto) {
+    return this.authService.signupLocal(dto);
   }
 
   @HttpCode(HttpStatus.OK)
-  @Post('signin')
-  signin(@Body() dto: AuthDto) {
-    return this.authService.signin(dto);
+  @Post('/local/signin')
+  signinLocal(@Body() dto: AuthDto) {
+    return this.authService.signinLocal(dto);
+  }
+
+  @Post('/logout')
+  logout() {
+    return this.authService.logout();
+  }
+
+  @Post('/refresh')
+  refreshToken() {
+    return this.authService.refreshToken();
   }
 }

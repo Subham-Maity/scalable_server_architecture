@@ -20,7 +20,7 @@ export class AuthService {
     });
     return { access_token: token };
   });
-  signup = asyncErrorHandler(async (dto: AuthDto) => {
+  signupLocal = asyncErrorHandler(async (dto: AuthDto) => {
     const hash = await argon.hash(dto.password);
     const user = await this.prisma.user.create({
       data: {
@@ -30,7 +30,7 @@ export class AuthService {
     });
     return this.signToken(user.id, user.email);
   });
-  signin = asyncErrorHandler(async (dto: AuthDto) => {
+  signinLocal = asyncErrorHandler(async (dto: AuthDto) => {
     const user = await this.prisma.user.findUnique({
       where: {
         email: dto.email,
@@ -44,6 +44,14 @@ export class AuthService {
       throw new UnauthorizedException('Invalid credentials');
     }
     return this.signToken(user.id, user.email);
+  });
+
+  logout = asyncErrorHandler(async (dto: AuthDto) => {
+    console.log(dto);
+  });
+
+  refreshToken = asyncErrorHandler(async (dto: AuthDto) => {
+    console.log(dto);
   });
 
   constructor(
