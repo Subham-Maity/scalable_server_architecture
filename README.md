@@ -4,6 +4,8 @@
 
 > _Note:_ These bookmarks are only meant for testing purposes, and you can easily change this part to the desired features at any time you wish.
 
+### [Prisma Example Reference ](https://github.com/Subham-Maity/prisma-the-ultimate-resource/blob/main/prisma/schema.prisma)
+
 ```markdown
 📂 example
     └───v1.0.0

@@ -2,7 +2,7 @@
 
 
 - If you want to migrate `npx prisma migrate dev`
-
+- For mongodb use `npx prisma db push`
 
 ```bash
 
