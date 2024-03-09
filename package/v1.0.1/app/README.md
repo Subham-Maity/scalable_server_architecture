@@ -5,9 +5,6 @@
 - For mongodb use `npx prisma db push`
 
 ```bash
-
-yarn db:dev:restart
-
 npx prisma studio
 
 yarn start:dev

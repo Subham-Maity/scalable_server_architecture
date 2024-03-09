@@ -31,7 +31,7 @@ describe('App e2e', () => {
 
   describe('Auth', () => {
     const dto: AuthDto = {
-      email: 'vlad@gmail.com',
+      email: 'subham@gmail.com',
       password: '123',
     };
     describe('Signup', () => {
