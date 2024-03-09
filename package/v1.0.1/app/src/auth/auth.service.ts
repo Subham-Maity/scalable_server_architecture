@@ -2,40 +2,26 @@ import { Injectable, NotFoundException, UnauthorizedException } from '@nestjs/co
 import { PrismaService } from '../prisma/prisma.service';
 import { AuthDto } from './dto';
 import { asyncErrorHandler } from '../errors/async-error-handler';
-import { JwtService } from '@nestjs/jwt';
-import { ConfigService } from '@nestjs/config';
-import { PasswordHash } from './hash/hash.service';
+import { PasswordHash } from './hash';
+import { TokenService } from './token';
+import { Tokens } from './type';
 
 @Injectable()
 export class AuthService {
   constructor(
     private prisma: PrismaService,
-    private jwt: JwtService,
-    private config: ConfigService,
+    private tokenService: TokenService,
   ) {}
 
-  signToken = asyncErrorHandler(async (userId: number, email: string) => {
-    const payload = {
-      sub: userId,
-      email,
-    };
-    const secret = this.config.get('JWT_SECRET');
-    const token = this.jwt.sign(payload, {
-      expiresIn: '15m',
-      secret: secret,
-    });
-    return { access_token: token };
-  });
-
-  signupLocal = asyncErrorHandler(async (dto: AuthDto) => {
-    const hash = await PasswordHash.hashData(dto.password); // use the PasswordHash class
+  signupLocal = asyncErrorHandler(async (dto: AuthDto): Promise<Tokens> => {
+    const hash = await PasswordHash.hashData(dto.password);
     const user = await this.prisma.user.create({
       data: {
         email: dto.email,
         hash,
       },
     });
-    return this.signToken(user.id, user.email);
+    return this.tokenService.signToken(user.id, user.email);
   });
 
   signinLocal = asyncErrorHandler(async (dto: AuthDto) => {
@@ -47,11 +33,11 @@ export class AuthService {
     if (!user) {
       throw new NotFoundException('User not found');
     }
-    const match = await PasswordHash.verifyPassword(user.hash, dto.password); // use the PasswordHash class
+    const match = await PasswordHash.verifyPassword(user.hash, dto.password);
     if (!match) {
       throw new UnauthorizedException('Invalid credentials');
     }
-    return this.signToken(user.id, user.email);
+    return this.tokenService.signToken(user.id, user.email);
   });
 
   logout = asyncErrorHandler(async (dto: AuthDto) => {
