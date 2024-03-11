@@ -6,9 +6,11 @@ import { PasswordHash } from './hash';
 import { TokenService } from './token';
 import { Tokens } from './type';
 import { RtTokenService } from './hash/rt-hash.service';
+import { ConfigId } from '../types/configId';
 
 @Injectable()
 export class AuthService {
+  /**Singup - Local*/
   signupLocal = asyncErrorHandler(async (dto: AuthDto): Promise<Tokens> => {
     const hash = await PasswordHash.hashData(dto.password);
     //user created
@@ -25,7 +27,8 @@ export class AuthService {
 
     return tokens;
   });
-  signinLocal = asyncErrorHandler(async (dto: AuthDto) => {
+  /**Singin - Local*/
+  signinLocal = asyncErrorHandler(async (dto: AuthDto): Promise<Tokens> => {
     //find user
     const user = await this.prisma.user.findUnique({
       where: {
@@ -49,8 +52,26 @@ export class AuthService {
 
     return tokens;
   });
-  logout = asyncErrorHandler(async (dto: AuthDto) => {
-    console.log(dto);
+
+  /**Logout Local*/
+  logoutLocal = asyncErrorHandler(async (userId: ConfigId): Promise<boolean> => {
+    // The 'updateMany' method is used instead of 'update' because 'update' only updates the first record it finds that matches the criteria.
+    // In this case, if there are multiple records with the same 'userId' and a non-null 'refreshTokenHash', 'update' would only update one of them.
+    // By using 'updateMany', we ensure that all matching records are updated, not just the first one found.
+    // If the user clicks the logout button multiple times, the 'updateMany' function will still execute without errors,
+    // but it won't change anything after the first click because the 'refreshTokenHash' is already null.
+    await this.prisma.user.updateMany({
+      where: {
+        id: userId,
+        refreshTokenHash: {
+          not: null,
+        },
+      },
+      data: {
+        refreshTokenHash: null,
+      },
+    });
+    return true;
   });
   refreshToken = asyncErrorHandler(async (dto: AuthDto) => {
     console.log(dto);

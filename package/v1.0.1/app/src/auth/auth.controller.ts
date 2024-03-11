@@ -33,11 +33,13 @@ export class AuthController {
     return this.authService.signinLocal(dto);
   }
 
-  @Post('/logout')
+  @HttpCode(HttpStatus.OK)
+  @Post('/local/logout')
   logout() {
-    return this.authService.logout();
+    return this.authService.logoutLocal();
   }
 
+  @HttpCode(HttpStatus.OK)
   @Post('/refresh')
   refreshToken() {
     return this.authService.refreshToken();
