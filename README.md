@@ -87,4 +87,4 @@
 
 ### 📚 GUIDE TOC:
 
-#### 📌 [Version 1.0.0](package/v1.0.1/documentation/README.md)
+#### 📌 [Version 1.0.1](package/v1.0.1/documentation/README.md)

@@ -36,4 +36,11 @@ export class PasswordHash {
     // The password entered by the user is concatenated with the pepper and then compared to the stored hash
     return await argon.verify(hash, password + pepper);
   }
+  static async hashRefreshToken(rt: string) {
+    // Use the same pepper as in the hashData function
+    const pepper = process.env.PEPPER || 'my-super-secret-pepper';
+
+    // Hash the refresh token with Argon2 and the pepper
+    return await argon.hash(rt + pepper);
+  }
 }
