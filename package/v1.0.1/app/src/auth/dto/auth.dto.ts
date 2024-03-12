@@ -19,9 +19,9 @@ export function IsDifferentFrom(property: string, validationOptions?: Validation
       constraints: [property],
       options: validationOptions,
       validator: {
-        validate(value: any, args: ValidationArguments) {
+        validate(value, args: ValidationArguments) {
           const [relatedPropertyName] = args.constraints;
-          const relatedValue = (args.object as any)[relatedPropertyName];
+          const relatedValue = args.object[relatedPropertyName];
           return value !== relatedValue;
         },
       },

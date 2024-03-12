@@ -1,10 +1,11 @@
-import { Body, Controller, HttpCode, HttpStatus, Post, Req, UseGuards } from '@nestjs/common';
+import { Body, Controller, HttpCode, HttpStatus, Post, UseGuards } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { AuthDto } from './dto';
-import { AST } from 'eslint';
-import { AuthGuard } from '@nestjs/passport';
-import { Request } from 'express';
-import Token = AST.Token;
+import { RtGuard } from './guard';
+import { Tokens } from './type';
+import { GetCurrentUser, GetCurrentUserId } from './decorator';
+import { Public } from '../common/decorator';
+import { ConfigId } from '../types';
 
 @Controller('auth')
 export class AuthController {
@@ -17,9 +18,10 @@ export class AuthController {
    }
    * @param dto
    */
+  @Public()
   @Post('/local/signup')
   @HttpCode(HttpStatus.CREATED)
-  signupLocal(@Body() dto: AuthDto): Promise<Token> {
+  signupLocal(@Body() dto: AuthDto): Promise<Tokens> {
     return this.authService.signupLocal(dto);
   }
 
@@ -29,9 +31,10 @@ export class AuthController {
    }
    * @param dto
    */
-  @HttpCode(HttpStatus.OK)
+  @Public()
   @Post('/local/signin')
-  signinLocal(@Body() dto: AuthDto): Promise<Token> {
+  @HttpCode(HttpStatus.OK)
+  signinLocal(@Body() dto: AuthDto): Promise<Tokens> {
     return this.authService.signinLocal(dto);
   }
 
@@ -39,27 +42,28 @@ export class AuthController {
    bearer token: {access token}
    }
    * It will set the `refreshTokenHash` to null in the database.
-   * @param req
+   * @param userId
    */
-  @UseGuards(AuthGuard('jwt'))
   @Post('/local/logout')
   @HttpCode(HttpStatus.OK)
-  logout(@Req() req: Request) {
-    const user = req.user;
-    return this.authService.logoutLocal(user['sub']);
+  logout(@GetCurrentUserId() userId: ConfigId): Promise<boolean> {
+    return this.authService.logoutLocal(userId);
   }
   /** POST: http://localhost:3333/auth/refresh
    bearer token: {refresh token}
    }
    * It will return a new access token and refresh token.
-   * @param req
+   * @param userId
+   * @param refreshToken
    */
-
-  @UseGuards(AuthGuard('jwt-refresh'))
-  @Post('/refresh')
+  @Public()
+  @UseGuards(RtGuard)
+  @Post('refresh')
   @HttpCode(HttpStatus.OK)
-  refreshToken(@Req() req: Request) {
-    const user = req.user;
-    return this.authService.refreshToken(user['sub'], user['refreshToken']);
+  refreshTokens(
+    @GetCurrentUserId() userId: ConfigId,
+    @GetCurrentUser('refreshToken') refreshToken: string,
+  ): Promise<Tokens> {
+    return this.authService.refreshToken(userId, refreshToken);
   }
 }

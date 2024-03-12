@@ -1,21 +1,23 @@
 import { Body, Controller, Get, Patch, UseGuards } from '@nestjs/common';
-import { JwtGuard } from '../auth/guard';
-import { GetUser } from '../auth/decorator';
+
 import { User } from '@prisma/client';
 import { EditUserDto } from './dto';
 import { UserService } from './user.service';
+import { AtGuard } from '../auth/guard';
+import { GetCurrentUser, GetCurrentUserId } from '../auth/decorator';
+import { ConfigId } from '../types';
 
-@UseGuards(JwtGuard)
+@UseGuards(AtGuard)
 @Controller('users')
 export class UserController {
   constructor(private userService: UserService) {}
   @Get('me')
-  getMe(@GetUser() user: User) {
+  getMe(@GetCurrentUser() user: User) {
     return user;
   }
 
   @Patch()
-  editUser(@GetUser('id') userId: number, @Body() dto: EditUserDto) {
+  editUser(@GetCurrentUserId() userId: ConfigId, @Body() dto: EditUserDto) {
     return this.userService.editUser(userId, dto);
   }
 }
