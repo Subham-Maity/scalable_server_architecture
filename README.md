@@ -7,10 +7,13 @@
 ### [Prisma Example Reference ](https://github.com/Subham-Maity/prisma-the-ultimate-resource/blob/main/prisma/schema.prisma)
 
 ```markdown
-📂 example
-    └───v1.0.0 [focus: basic structure, passport auth,basic dto, db setup,testing environment]
-        ├───app - the main application version 1.0.0
-        └───documentation - the documentation for the main application version 1.0.0
+📂 package
+    ├───v1.0.0 [focus: basic structure, passport auth,basic dto, db setup,testing environment]
+    │   ├───app - the main application
+    │   └───documentation
+    ├───v1.0.1 [focus: refresh token, access token]
+    │   ├───app - the main application
+    │   └───documentation
 ``` 
 -------
 
@@ -88,3 +91,26 @@
 ### 📚 GUIDE TOC:
 
 #### 📌 [Version 1.0.1](package/v1.0.1/documentation/README.md)
+
+- 1. MongoDB Setup
+- 2. Auth Controller
+- 3. Auth DTO
+- 4. Auth Service
+    - 4.1 `signupLocal`
+    - 4.2 `signinLocal`
+    - 4.3 `signoutLocal`
+    - 4.4 `refreshToken`
+- 5. Hashing Passwords with Argon2
+- 6. Token Service
+- 7. RtTokenService
+- 8. AT & RT Strategy
+    - 8.1 `AtStrategy (Access Token Strategy)`
+    - 8.2 `RtStrategy (Refresh Token Strategy)`
+- 9. AT & RT Guard
+    - 9.1 `at.guard.ts`
+    - 9.2 `rt.guard.ts`
+- 10. Decorator
+    - 10.1 public.decorator.ts
+    - 10.2 get-current-user.decorator.ts
+    - 10.3 get-current-user-id.decorator.ts
+- 11. Auth Module

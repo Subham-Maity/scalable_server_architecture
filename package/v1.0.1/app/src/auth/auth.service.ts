@@ -55,7 +55,7 @@ export class AuthService {
   });
 
   /**Logout Local*/
-  logoutLocal = asyncErrorHandler(async (userId: ConfigId): Promise<boolean> => {
+  signoutLocal = asyncErrorHandler(async (userId: ConfigId): Promise<boolean> => {
     // The 'updateMany' method is used instead of 'update' because 'update' only updates the first record it finds that matches the criteria.
     // In this case, if there are multiple records with the same 'userId' and a non-null 'refreshTokenHash', 'update' would only update one of them.
     // By using 'updateMany', we ensure that all matching records are updated, not just the first one found.

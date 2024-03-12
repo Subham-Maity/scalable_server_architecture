@@ -44,10 +44,10 @@ export class AuthController {
    * It will set the `refreshTokenHash` to null in the database.
    * @param userId
    */
-  @Post('/local/logout')
+  @Post('/local/signout')
   @HttpCode(HttpStatus.OK)
   logout(@GetCurrentUserId() userId: ConfigId): Promise<boolean> {
-    return this.authService.logoutLocal(userId);
+    return this.authService.signoutLocal(userId);
   }
   /** POST: http://localhost:3333/auth/refresh
    bearer token: {refresh token}
