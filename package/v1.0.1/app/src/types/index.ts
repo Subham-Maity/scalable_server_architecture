@@ -1,1 +1,1 @@
-export * from './configId';
+export * from './config-id';

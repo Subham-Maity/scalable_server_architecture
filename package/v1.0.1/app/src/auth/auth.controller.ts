@@ -56,6 +56,10 @@ export class AuthController {
    * @param userId
    * @param refreshToken
    */
+
+  //if we don't use public decorator,
+  //then it will ask for AtGuard instead of RtGuard
+  //Purpose: @Public() here - bypass the access token check
   @Public()
   @UseGuards(RtGuard)
   @Post('refresh')
