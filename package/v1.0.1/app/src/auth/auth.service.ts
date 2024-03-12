@@ -6,7 +6,7 @@ import { PasswordHash } from './hash';
 import { TokenService } from './token';
 import { Tokens } from './type';
 import { RtTokenService } from './hash/rt-hash.service';
-import { ConfigId } from '../types/configId';
+import { ConfigId } from '../types';
 
 @Injectable()
 export class AuthService {
@@ -27,6 +27,7 @@ export class AuthService {
 
     return tokens;
   });
+
   /**Singin - Local*/
   signinLocal = asyncErrorHandler(async (dto: AuthDto): Promise<Tokens> => {
     //find user
@@ -73,8 +74,33 @@ export class AuthService {
     });
     return true;
   });
-  refreshToken = asyncErrorHandler(async (dto: AuthDto) => {
-    console.log(dto);
+
+  /**Refresh Token*/
+  refreshToken = asyncErrorHandler(async (userId: ConfigId, rt: string): Promise<Tokens> => {
+    //find user by id
+    const user = await this.prisma.user.findUnique({
+      where: {
+        id: userId,
+      },
+    });
+    //return error if user not found or refresh token hash is null
+    if (!user || !user.refreshTokenHash)
+      throw new ForbiddenException('User not found or refresh token hash is null');
+
+    //verify refresh token
+    const rtMatches = await PasswordHash.verifyPassword(user.refreshTokenHash, rt);
+
+    //return error if refresh token does not match
+    if (!rtMatches) throw new ForbiddenException('Refresh token does not match');
+
+    //token created
+    const tokens = await this.tokenService.getTokens(user.id, user.email);
+
+    //refresh token hash updated in the database
+    await this.rtTokenService.updateRtHash(user.id, tokens.refresh_token);
+
+    //return tokens
+    return tokens;
   });
 
   constructor(
