@@ -8,24 +8,25 @@
 
 ```markdown
 📂 package
-    ├───v1.0.0 [focus: basic structure, passport auth,basic dto, db setup,testing environment]
-    │   ├───app - the main application
+    ├───v1.0.0 
+    │   ├───app 
     │   └───documentation
-    ├───v1.0.1 [focus: refresh token, access token]
-    │   ├───app - the main application
+    ├───v1.0.1
+    │   ├───app 
     │   └───documentation
-    ├───v1.0.2 [focus: swagger setup, swagger config]
-    │   ├───app - the main application
+    ├───v1.0.2 
+    │   ├───app 
     │   └───documentation
 ``` 
+> `app` is the main application codebase, and `documentation` is the guide to the application.
 -------
 
--------
+
 ### 📚 GUIDE TOC:
 
-#### 📌 [Version 1.0.0](package/v1.0.0/documentation/README.md)
+#### 📌 [Version 1.0.0](package/v1.0.0/documentation/README.md) - `focus`: basic structure, passport auth,basic dto, db setup,testing environment
 
-#### 📌 [Version 1.0.1](package/v1.0.1/documentation/README.md)
+#### 📌 [Version 1.0.1](package/v1.0.1/documentation/README.md) - `focus`: refresh token, access token, Testing with Pactum
 
-#### 📌 [Version 1.0.2](package/v1.0.2/documentation/README.md)
+#### 📌 [Version 1.0.2](package/v1.0.2/documentation/README.md) - `focus`: swagger setup, swagger config
 
