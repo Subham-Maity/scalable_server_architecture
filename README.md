@@ -14,6 +14,9 @@
     ├───v1.0.1 [focus: refresh token, access token]
     │   ├───app - the main application
     │   └───documentation
+    ├───v1.0.2 [focus: swagger setup, swagger config]
+    │   ├───app - the main application
+    │   └───documentation
 ``` 
 -------
 
