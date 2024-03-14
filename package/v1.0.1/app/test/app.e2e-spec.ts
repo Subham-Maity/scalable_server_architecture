@@ -4,10 +4,11 @@ import * as pactum from 'pactum';
 import { AppModule } from '../src/app.module';
 import { AuthDto } from '../src/auth/dto';
 import { EditUserDto } from '../src/user/dto';
+import { PrismaService } from '../src/prisma/prisma.service';
 
 describe('App e2e', () => {
   let app: INestApplication;
-
+  let prisma: PrismaService;
   beforeAll(async () => {
     const moduleRef = await Test.createTestingModule({
       imports: [AppModule],
@@ -22,6 +23,8 @@ describe('App e2e', () => {
     await app.init();
     await app.listen(3333);
 
+    prisma = app.get(PrismaService);
+    await prisma.cleanDatabase();
     pactum.request.setBaseUrl('http://localhost:3333');
   });
 
@@ -32,7 +35,7 @@ describe('App e2e', () => {
   describe('Auth', () => {
     const dto: AuthDto = {
       email: 'subham@gmail.com',
-      password: '123',
+      password: '123@Subham78_StrongPass',
     };
     describe('Signup', () => {
       it('should throw if email empty', () => {
@@ -55,6 +58,56 @@ describe('App e2e', () => {
       });
       it('should throw if no body provided', () => {
         return pactum.spec().post('/auth/local/signup').expectStatus(400);
+      });
+      it('should throw if password does not contain a special character', () => {
+        return pactum
+          .spec()
+          .post('/auth/local/signup')
+          .withBody({
+            email: 'subham@gmail.com',
+            password: 'PasswordWithoutSpecialChar1',
+          })
+          .expectStatus(400);
+      });
+      it('should throw if password does not contain an uppercase letter', () => {
+        return pactum
+          .spec()
+          .post('/auth/local/signup')
+          .withBody({
+            email: 'subham@gmail.com',
+            password: 'passwordwithoutuppercase1!',
+          })
+          .expectStatus(400);
+      });
+      it('should throw if password does not contain a lowercase letter', () => {
+        return pactum
+          .spec()
+          .post('/auth/local/signup')
+          .withBody({
+            email: 'subham@gmail.com',
+            password: 'PASSWORDWITHOUTLOWERCASE1!',
+          })
+          .expectStatus(400);
+      });
+      it('should throw if password does not contain a number', () => {
+        return pactum
+          .spec()
+          .post('/auth/local/signup')
+          .withBody({
+            email: 'subham@gmail.com',
+            password: 'PasswordWithoutNumber!',
+          })
+          .expectStatus(400);
+      });
+      it('should throw if password is the same as email', () => {
+        return pactum
+          .spec()
+          .post('/auth/local/signup')
+          .withBody({
+            email: 'subham@gmail.com',
+            password: 'subham@gmail.com',
+          })
+          .expectStatus(400);
       });
       it('should signup', () => {
         return pactum.spec().post('/auth/local/signup').withBody(dto).expectStatus(201);
@@ -83,13 +136,38 @@ describe('App e2e', () => {
       it('should throw if no body provided', () => {
         return pactum.spec().post('/auth/local/signin').expectStatus(400);
       });
-      it('should signin', () => {
-        return pactum
+      it('should signin', async () => {
+        await pactum
           .spec()
           .post('/auth/local/signin')
           .withBody(dto)
           .expectStatus(200)
-          .stores('userAt', 'access_token');
+          .stores('access_token', 'access_token')
+          .stores('refresh_token', 'refresh_token');
+      });
+    });
+    describe('should refresh tokens', () => {
+      it('should throw if no token provided', async () => {
+        await pactum.spec().post('/auth/refresh').expectStatus(401);
+      });
+      it('should refresh tokens', async () => {
+        await pactum
+          .spec()
+          .post('/auth/refresh')
+          .withHeaders({ Authorization: 'Bearer $S{refresh_token}' })
+          .expectStatus(200);
+      });
+    });
+    describe('Logout', () => {
+      it('should throw if no token provided', async () => {
+        await pactum.spec().post('/auth/local/signout').expectStatus(401);
+      });
+      it('should logout', async () => {
+        await pactum
+          .spec()
+          .post('/auth/local/signout')
+          .withHeaders({ Authorization: 'Bearer $S{access_token}' })
+          .expectStatus(200);
       });
     });
   });
@@ -101,7 +179,7 @@ describe('App e2e', () => {
           .spec()
           .get('/users/me')
           .withHeaders({
-            Authorization: 'Bearer $S{userAt}',
+            Authorization: 'Bearer $S{access_token}',
           })
           .expectStatus(200);
       });
@@ -117,7 +195,7 @@ describe('App e2e', () => {
           .spec()
           .patch('/users')
           .withHeaders({
-            Authorization: 'Bearer $S{userAt}',
+            Authorization: 'Bearer $S{access_token}',
           })
           .withBody(dto)
           .expectStatus(200)
