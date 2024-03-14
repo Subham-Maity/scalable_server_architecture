@@ -6,7 +6,18 @@ import { Tokens } from './type';
 import { GetCurrentUser, GetCurrentUserId } from './decorator';
 import { Public } from '../common/decorator';
 import { ConfigId } from '../types';
+import {
+  ApiBadRequestResponse,
+  ApiBearerAuth,
+  ApiBody,
+  ApiCreatedResponse,
+  ApiOkResponse,
+  ApiOperation,
+  ApiTags,
+  ApiUnauthorizedResponse,
+} from '@nestjs/swagger';
 
+@ApiTags('🔐 Authentication')
 @Controller('auth')
 export class AuthController {
   constructor(private authService: AuthService) {}
@@ -21,6 +32,14 @@ export class AuthController {
   @Public()
   @Post('/local/signup')
   @HttpCode(HttpStatus.CREATED)
+  @ApiOperation({ summary: 'Sign up a new user' })
+  @ApiCreatedResponse({
+    status: 201,
+    description: 'The user has been successfully created.',
+    type: 'application/text',
+  })
+  @ApiBadRequestResponse({ status: 400, description: 'Bad Request: Invalid data.' })
+  @ApiBody({ type: AuthDto, description: 'The user information' })
   signupLocal(@Body() dto: AuthDto): Promise<Tokens> {
     return this.authService.signupLocal(dto);
   }
@@ -34,6 +53,15 @@ export class AuthController {
   @Public()
   @Post('/local/signin')
   @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Sign in an existing user' })
+  @ApiOkResponse({
+    status: 200,
+    description: 'The user has been successfully signed in.',
+    type: 'application/text',
+  })
+  @ApiBadRequestResponse({ status: 400, description: 'Bad Request: Invalid data.' })
+  @ApiUnauthorizedResponse({ status: 403, description: 'Unauthorized: Password does not match.' })
+  @ApiBody({ type: AuthDto, description: 'The user credentials' })
   signinLocal(@Body() dto: AuthDto): Promise<Tokens> {
     return this.authService.signinLocal(dto);
   }
@@ -45,7 +73,14 @@ export class AuthController {
    * @param userId
    */
   @Post('/local/signout')
+  @ApiBearerAuth()
   @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Sign out the current user' })
+  @ApiOkResponse({
+    status: 200,
+    description: 'The user has been successfully signed out.',
+  })
+  @ApiUnauthorizedResponse({ status: 401, description: 'Unauthorized: No token provided.' })
   logout(@GetCurrentUserId() userId: ConfigId): Promise<boolean> {
     return this.authService.signoutLocal(userId);
   }
@@ -64,6 +99,13 @@ export class AuthController {
   @UseGuards(RtGuard)
   @Post('refresh')
   @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Refresh the tokens of the current user' })
+  @ApiOkResponse({
+    status: 200,
+    description: 'The tokens have been successfully refreshed.',
+    type: 'application/text',
+  })
+  @ApiUnauthorizedResponse({ status: 401, description: 'Unauthorized: No token provided.' })
   refreshTokens(
     @GetCurrentUserId() userId: ConfigId,
     @GetCurrentUser('refreshToken') refreshToken: string,
