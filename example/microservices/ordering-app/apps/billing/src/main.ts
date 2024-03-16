@@ -1,11 +1,13 @@
 import { NestFactory } from '@nestjs/core';
-import { BillingModule } from './billing.module';
-import { RmqService } from '@app/common';
+import { OrdersModule } from '../../orders/src/orders.module';
+import { AllExceptionsFilter, RmqService, setupGlobalPipes } from '@app/common';
 
 async function bootstrap() {
-  const app = await NestFactory.create(BillingModule);
+  const app = await NestFactory.create(OrdersModule);
+  app.useGlobalFilters(new AllExceptionsFilter());
+  setupGlobalPipes(app);
   const rmqService = app.get<RmqService>(RmqService);
   app.connectMicroservice(rmqService.getOptions('BILLING'));
-  await app.listen(3000);
+  await app.startAllMicroservices();
 }
 bootstrap();
