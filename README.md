@@ -2,11 +2,16 @@
 
 **The best way to develop high-quality and reliable scalable APIs—with proper documentation and testing using NestJS and modern technologies like Prisma, TypeORM, Passport, JWT, Pactum, and more.**
 
-> _Note:_ These bookmarks are only meant for testing purposes, and you can easily change this part to the desired features at any time you wish.
+> _Note:_ Everything implemented in a versioned manner, so that you can easily understand the changes and the new features added in each version and then use them in the example application.
 
-### [Prisma Example Reference ](https://github.com/Subham-Maity/prisma-the-ultimate-resource/blob/main/prisma/schema.prisma)
+
+
+
 
 ```markdown
+📂 example
+│   └───microservices
+│           └───ordering-app
 📂 package
     ├───v1.0.0 
     │   ├───app 
@@ -19,6 +24,7 @@
     │   └───documentation
 ``` 
 > `app` is the main application codebase, and `documentation` is the guide to the application.
+> #### [Prisma Example Reference ](https://github.com/Subham-Maity/prisma-the-ultimate-resource/blob/main/prisma/schema.prisma)
 -------
 
 

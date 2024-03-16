@@ -2,18 +2,14 @@ import { Module } from '@nestjs/common';
 import { OrdersController } from './orders.controller';
 import { OrdersService } from './orders.service';
 import { ConfigModule } from '@nestjs/config';
-import { z } from 'zod';
 import { PrismaModule } from '@app/common';
-
-const configSchema = z.object({
-  DATABASE_URL: z.string().url().min(1),
-});
+import { validateConfig } from '@app/common/validation/config.z';
 
 @Module({
   imports: [
     ConfigModule.forRoot({
       isGlobal: true,
-      validationSchema: configSchema,
+      validationSchema: { validate: validateConfig },
     }),
     PrismaModule,
   ],
