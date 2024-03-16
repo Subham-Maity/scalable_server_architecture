@@ -1,8 +1,7 @@
 import { Injectable } from '@nestjs/common';
-import { CreateOrderDto } from './dto/create-order.dto';
-import { PrismaService } from '@app/common';
-import { asyncErrorHandler } from '@app/common/errors/async-error-handler';
-import { Order } from './types/order.types';
+import { asyncErrorHandler, PrismaService } from '@app/common';
+import { CreateOrderDto } from './dto';
+import { Order } from './types';
 
 @Injectable()
 export class OrdersService {

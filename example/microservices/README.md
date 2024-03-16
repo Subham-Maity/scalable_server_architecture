@@ -67,3 +67,8 @@ nest g library common
 
 - you will see a `lib` folder inside that folder you will get the `common` folder and inside that, you will get the `src` folder.
 
+4. Microservice
+
+```bash
+yarn add @nestjs/microservices
+```

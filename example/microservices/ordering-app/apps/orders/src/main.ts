@@ -1,8 +1,7 @@
 import { NestFactory } from '@nestjs/core';
 import { OrdersModule } from './orders.module';
-import { setupGlobalPipes } from '@app/common/pipes';
 import { ConfigService } from '@nestjs/config';
-import { AllExceptionsFilter } from '@app/common/errors/global-exception-filter';
+import { AllExceptionsFilter, setupGlobalPipes } from '@app/common';
 
 async function bootstrap() {
   const app = await NestFactory.create(OrdersModule);
