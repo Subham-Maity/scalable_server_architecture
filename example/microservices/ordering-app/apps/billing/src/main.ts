@@ -10,4 +10,4 @@ async function bootstrap() {
   app.connectMicroservice(rmqService.getOptions('BILLING'));
   await app.startAllMicroservices();
 }
-bootstrap();
+bootstrap().then(() => console.log('Billing app is running'));

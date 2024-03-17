@@ -4,11 +4,14 @@ WORKDIR /usr/src/app
 
 COPY package*.json ./
 
-RUN npm install
+RUN yarn
 
 COPY . .
 
-RUN npm run build billing
+RUN yarn build billing
+
+
+RUN npx prisma generate
 
 FROM node:alpine as production
 
@@ -19,7 +22,7 @@ WORKDIR /usr/src/app
 
 COPY package*.json ./
 
-RUN npm install --only=production
+RUN yarn add --only=production
 
 COPY . .
 

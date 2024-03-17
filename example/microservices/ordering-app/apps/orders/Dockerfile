@@ -14,7 +14,7 @@ RUN yarn install
 COPY . .
 
 # Build the application
-RUN yarn build
+RUN yarn build orders
 
 # Prismate the application
 RUN npx prisma generate

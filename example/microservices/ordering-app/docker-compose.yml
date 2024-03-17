@@ -12,3 +12,19 @@ services:
       - /usr/src/app/node_modules
     ports:
       - '3333:3333'
+  billing:
+    build:
+      context: .
+      dockerfile: ./apps/billing/Dockerfile
+      target: development
+    command: yarn start:dev billing
+    env_file:
+      - ./apps/billing/.env
+    volumes:
+      - .:/usr/src/app
+      - /usr/src/app/node_modules
+
+  rabbitmq:
+    image: rabbitmq
+    ports:
+      - '5672:5672'
