@@ -2,10 +2,10 @@ import { ForbiddenException, Injectable, NotFoundException } from '@nestjs/commo
 import { PrismaService } from '../prisma/prisma.service';
 import { AuthDto } from './dto';
 import { asyncErrorHandler } from '../errors/async-error-handler';
-import { PasswordHash } from './hash';
+import { PasswordHash } from './encrypt';
 import { TokenService } from './token';
 import { Tokens } from './type';
-import { RtTokenService } from './hash/rt-hash.service';
+import { RtTokenService } from './encrypt/rt-hash.service';
 import { ConfigId } from '../types';
 
 @Injectable()

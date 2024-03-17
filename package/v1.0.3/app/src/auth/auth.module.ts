@@ -5,7 +5,7 @@ import { JwtModule, JwtService } from '@nestjs/jwt';
 import { TokenService } from './token';
 import { ConfigModule } from '@nestjs/config';
 import { AtStrategy, RtStrategy } from './strategies';
-import { RtTokenService } from './hash';
+import { RtTokenService } from './encrypt';
 
 @Module({
   imports: [JwtModule.register({}), ConfigModule],
