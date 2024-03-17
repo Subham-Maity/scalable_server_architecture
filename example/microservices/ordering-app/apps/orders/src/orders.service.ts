@@ -1,36 +1,36 @@
 import { Inject, Injectable } from '@nestjs/common';
-import { asyncErrorHandler, PrismaService } from '@app/common';
-import { CreateOrderDto } from './dto';
-import { Order } from './types';
 import { ClientProxy } from '@nestjs/microservices';
-import { BILLING_SERVICE } from './constant/services';
+import { lastValueFrom } from 'rxjs';
+import { BILLING_SERVICE } from './constants/services';
+import { CreateOrderRequest } from './dto/create-order.request';
+import { OrdersRepository } from './orders.repository';
 
 @Injectable()
 export class OrdersService {
-  getOrders = asyncErrorHandler(async (): Promise<Order[]> => {
-    return this.prisma.order.findMany();
-  });
-  createOrder = asyncErrorHandler(async (dto: CreateOrderDto): Promise<Order> => {
-    return this.prisma.$transaction(async (tx) => {
-      try {
-        const order = await tx.order.create({
-          data: {
-            ...dto,
-          },
-        });
-
-        this.billingClient.emit('order_created', {
-          request: dto,
-        });
-        return order;
-      } catch (err) {
-        throw err;
-      }
-    });
-  });
-
   constructor(
-    private readonly prisma: PrismaService,
+    private readonly ordersRepository: OrdersRepository,
     @Inject(BILLING_SERVICE) private billingClient: ClientProxy,
   ) {}
+
+  async createOrder(request: CreateOrderRequest, authentication: string) {
+    const session = await this.ordersRepository.startTransaction();
+    try {
+      const order = await this.ordersRepository.create(request, { session });
+      await lastValueFrom(
+        this.billingClient.emit('order_created', {
+          request,
+          Authentication: authentication,
+        }),
+      );
+      await session.commitTransaction();
+      return order;
+    } catch (err) {
+      await session.abortTransaction();
+      throw err;
+    }
+  }
+
+  async getOrders() {
+    return this.ordersRepository.find({});
+  }
 }
