@@ -22,6 +22,9 @@
     ├───v1.0.2 
     │   ├───app 
     │   └───documentation
+    ├───v1.0.3
+    │   ├───app
+    │   └───documentation
 ``` 
 > `app` is the main application codebase, and `documentation` is the guide to the application.
 > #### [Prisma Example Reference ](https://github.com/Subham-Maity/prisma-the-ultimate-resource/blob/main/prisma/schema.prisma)
@@ -36,3 +39,4 @@
 
 #### 📌 [Version 1.0.2](package/v1.0.2/documentation/README.md) - `focus`: swagger setup, swagger config
 
+#### 📌 [Version 1.0.2](package/v1.0.3/documentation/README.md) - `focus`: sending token using cookies
