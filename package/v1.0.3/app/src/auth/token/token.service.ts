@@ -3,15 +3,11 @@ import { ConfigService } from '@nestjs/config';
 import { Injectable } from '@nestjs/common';
 import { asyncErrorHandler } from '../../errors/async-error-handler';
 import { JwtPayload, Tokens } from '../type';
+import { ConfigId } from '../../types';
 
 @Injectable()
 export class TokenService {
-  constructor(
-    private jwtService: JwtService,
-    private config: ConfigService,
-  ) {}
-
-  getTokens = asyncErrorHandler(async (userId: number, email: string): Promise<Tokens> => {
+  getTokens = asyncErrorHandler(async (userId: ConfigId, email: string): Promise<Tokens> => {
     const jwtPayload: JwtPayload = {
       sub: userId,
       email: email,
@@ -31,4 +27,9 @@ export class TokenService {
       refresh_token: rt,
     };
   });
+
+  constructor(
+    private jwtService: JwtService,
+    private config: ConfigService,
+  ) {}
 }

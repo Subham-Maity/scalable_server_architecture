@@ -1,14 +1,14 @@
-import { ExecutionContext, Injectable } from '@nestjs/common';
+import { ExecutionContext, Injectable, UnauthorizedException } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 import { AuthGuard } from '@nestjs/passport';
 
+// at.guard.ts
 @Injectable()
 export class AtGuard extends AuthGuard('jwt') {
   constructor(private reflector: Reflector) {
     super();
   }
 
-  //Purpose: Everytime you see something with public, please don't check for access token
   canActivate(context: ExecutionContext) {
     const isPublic = this.reflector.getAllAndOverride('isPublic', [
       context.getHandler(),
@@ -16,6 +16,13 @@ export class AtGuard extends AuthGuard('jwt') {
     ]);
 
     if (isPublic) return true;
+
+    const request = context.switchToHttp().getRequest();
+    const token = request.cookies['access_token'];
+
+    if (!token) {
+      throw new UnauthorizedException();
+    }
 
     return super.canActivate(context);
   }
