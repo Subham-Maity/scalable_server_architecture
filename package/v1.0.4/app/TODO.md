@@ -1,0 +1,3 @@
+- Need to add username also
+ - auth.dto.ts
+ - prisma.schema
