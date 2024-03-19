@@ -1,4 +1,14 @@
-import { Body, Controller, HttpCode, HttpStatus, Post, Res, UseGuards } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Get,
+  HttpCode,
+  HttpStatus,
+  Post,
+  Request,
+  Res,
+  UseGuards,
+} from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { AuthDto } from './dto';
 import { RtGuard } from './guard';
@@ -14,6 +24,8 @@ import {
   ApiTags,
   ApiUnauthorizedResponse,
 } from '@nestjs/swagger';
+import { AuthGuard } from '@nestjs/passport';
+import { RequestWithUser } from './type';
 
 @ApiTags('🔐 Authentication')
 @Controller('auth')
@@ -87,6 +99,7 @@ export class AuthController {
   ): Promise<void> {
     return this.authService.signoutLocal(userId, res);
   }
+
   /** POST: http://localhost:3333/auth/refresh
    bearer token: {refresh token}
    }
@@ -116,5 +129,25 @@ export class AuthController {
     @Res({ passthrough: true }) res: Response,
   ): Promise<void> {
     return this.authService.refreshToken(userId, refreshToken, res);
+  }
+
+  /** POST: http://localhost:3333/auth/check
+   bearer token: {access token}
+   }
+   * It will return a new access token and refresh token.
+   * @param req
+   */
+  @UseGuards(AuthGuard('jwt'))
+  @Get('check')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: ' Check the current user' })
+  @ApiOkResponse({
+    status: 200,
+    description: 'The user id has been successfully checked.',
+    type: 'application/text',
+  })
+  @ApiUnauthorizedResponse({ status: 401, description: 'Unauthorized : No token provided.' })
+  checkUser(@Request() req: RequestWithUser) {
+    return this.authService.checkUser(req);
   }
 }

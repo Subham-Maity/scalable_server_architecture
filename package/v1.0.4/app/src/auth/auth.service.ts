@@ -1,4 +1,9 @@
-import { ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
+import {
+  ForbiddenException,
+  Injectable,
+  NotFoundException,
+  UnauthorizedException,
+} from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { AuthDto } from './dto';
 import { PasswordHash, RtTokenService } from './encrypt';
@@ -7,6 +12,7 @@ import { Response } from 'express';
 import { ConfigId } from '../types';
 import { clearCookie, cookieOptionsAt, cookieOptionsRt, setCookie } from '../common';
 import { asyncErrorHandler } from '../errors';
+import { RequestWithUser } from './type';
 
 @Injectable()
 export class AuthService {
@@ -85,7 +91,6 @@ export class AuthService {
     // End the response
     res.end();
   });
-
   /**Refresh Token*/
   refreshToken = asyncErrorHandler(
     async (userId: ConfigId, rt: string, res: Response): Promise<void> => {
@@ -124,4 +129,12 @@ export class AuthService {
     private tokenService: TokenService,
     private rtTokenService: RtTokenService,
   ) {}
+
+  /**Check User*/
+  checkUser(req: RequestWithUser): { id: string } {
+    if (!req.user || !req.user.sub) {
+      throw new UnauthorizedException();
+    }
+    return { id: req.user.sub };
+  }
 }
