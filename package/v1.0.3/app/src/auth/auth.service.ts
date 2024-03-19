@@ -24,8 +24,8 @@ export class AuthService {
     await this.rtTokenService.updateRtHash(user.id, tokens.refresh_token);
 
     // Set tokens in cookies
-    res.cookie('access_token', tokens.access_token, { httpOnly: true });
-    res.cookie('refresh_token', tokens.refresh_token, { httpOnly: true });
+    setCookie(res, 'access_token', tokens.access_token, cookieOptionsAt);
+    setCookie(res, 'refresh_token', tokens.refresh_token, cookieOptionsRt);
 
     // End the response
     res.end();
@@ -112,8 +112,8 @@ export class AuthService {
       //refresh token hash updated in the database
       await this.rtTokenService.updateRtHash(user.id, tokens.refresh_token);
       // Set tokens in cookies
-      res.cookie('access_token', tokens.access_token, { httpOnly: true });
-      res.cookie('refresh_token', tokens.refresh_token, { httpOnly: true });
+      setCookie(res, 'access_token', tokens.access_token, cookieOptionsAt);
+      setCookie(res, 'refresh_token', tokens.refresh_token, cookieOptionsRt);
 
       // End the response
       res.end();

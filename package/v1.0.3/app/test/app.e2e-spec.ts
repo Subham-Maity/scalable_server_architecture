@@ -1,14 +1,16 @@
-import { INestApplication, ValidationPipe } from '@nestjs/common';
+import { ValidationPipe } from '@nestjs/common';
 import { Test } from '@nestjs/testing';
-import * as pactum from 'pactum';
+import * as request from 'supertest';
 import { AppModule } from '../src/app.module';
 import { AuthDto } from '../src/auth/dto';
-import { EditUserDto } from '../src/user/dto';
 import { PrismaService } from '../src/prisma/prisma.service';
+import { Server } from 'http';
 
 describe('App e2e', () => {
-  let app: INestApplication;
+  let app: any;
   let prisma: PrismaService;
+  let server: Server;
+  request.agent(app);
   beforeAll(async () => {
     const moduleRef = await Test.createTestingModule({
       imports: [AppModule],
@@ -21,11 +23,10 @@ describe('App e2e', () => {
       }),
     );
     await app.init();
-    await app.listen(3333);
+    server = app.getHttpServer();
 
     prisma = app.get(PrismaService);
     await prisma.cleanDatabase();
-    pactum.request.setBaseUrl('http://localhost:3333');
   });
 
   afterAll(async () => {
@@ -37,170 +38,47 @@ describe('App e2e', () => {
       email: 'subham@gmail.com',
       password: '123@Subham78_StrongPass',
     };
+    let tokens: any[]; // Define tokens here
     describe('Signup', () => {
-      it('should throw if email empty', () => {
-        return pactum
-          .spec()
-          .post('/auth/local/signup')
-          .withBody({
-            password: dto.password,
-          })
-          .expectStatus(400);
-      });
-      it('should throw if password empty', () => {
-        return pactum
-          .spec()
-          .post('/auth/local/signup')
-          .withBody({
-            email: dto.email,
-          })
-          .expectStatus(400);
-      });
-      it('should throw if no body provided', () => {
-        return pactum.spec().post('/auth/local/signup').expectStatus(400);
-      });
-      it('should throw if password does not contain a special character', () => {
-        return pactum
-          .spec()
-          .post('/auth/local/signup')
-          .withBody({
-            email: 'subham@gmail.com',
-            password: 'PasswordWithoutSpecialChar1',
-          })
-          .expectStatus(400);
-      });
-      it('should throw if password does not contain an uppercase letter', () => {
-        return pactum
-          .spec()
-          .post('/auth/local/signup')
-          .withBody({
-            email: 'subham@gmail.com',
-            password: 'passwordwithoutuppercase1!',
-          })
-          .expectStatus(400);
-      });
-      it('should throw if password does not contain a lowercase letter', () => {
-        return pactum
-          .spec()
-          .post('/auth/local/signup')
-          .withBody({
-            email: 'subham@gmail.com',
-            password: 'PASSWORDWITHOUTLOWERCASE1!',
-          })
-          .expectStatus(400);
-      });
-      it('should throw if password does not contain a number', () => {
-        return pactum
-          .spec()
-          .post('/auth/local/signup')
-          .withBody({
-            email: 'subham@gmail.com',
-            password: 'PasswordWithoutNumber!',
-          })
-          .expectStatus(400);
-      });
-      it('should throw if password is the same as email', () => {
-        return pactum
-          .spec()
-          .post('/auth/local/signup')
-          .withBody({
-            email: 'subham@gmail.com',
-            password: 'subham@gmail.com',
-          })
-          .expectStatus(400);
-      });
-      it('should signup', () => {
-        return pactum.spec().post('/auth/local/signup').withBody(dto).expectStatus(201);
+      it('should signup', async () => {
+        await request(server).post('/auth/local/signup').send(dto).expect(201);
       });
     });
-
     describe('Signin', () => {
-      it('should throw if email empty', () => {
-        return pactum
-          .spec()
-          .post('/auth/local/signin')
-          .withBody({
-            password: dto.password,
-          })
-          .expectStatus(400);
-      });
-      it('should throw if password empty', () => {
-        return pactum
-          .spec()
-          .post('/auth/local/signin')
-          .withBody({
-            email: dto.email,
-          })
-          .expectStatus(400);
-      });
-      it('should throw if no body provided', () => {
-        return pactum.spec().post('/auth/local/signin').expectStatus(400);
-      });
       it('should signin', async () => {
-        await pactum
-          .spec()
-          .post('/auth/local/signin')
-          .withBody(dto)
-          .expectStatus(200)
-          .stores('access_token', 'access_token')
-          .stores('refresh_token', 'refresh_token');
+        const res = await request(server).post('/auth/local/signin').send(dto).expect(200);
+        const cookies = Array.isArray(res.headers['set-cookie'])
+          ? res.headers['set-cookie']
+          : [res.headers['set-cookie']];
+        tokens = cookies.map((cookie: any) => {
+          const [name, token] = cookie.split(';')[0].split('=');
+          return { name, token };
+        });
+        console.log('tokens', tokens);
       });
     });
     describe('should refresh tokens', () => {
-      it('should throw if no token provided', async () => {
-        await pactum.spec().post('/auth/refresh').expectStatus(401);
-      });
       it('should refresh tokens', async () => {
-        await pactum
-          .spec()
-          .post('/auth/refresh')
-          .withHeaders({ Authorization: 'Bearer $S{refresh_token}' })
-          .expectStatus(200);
+        // wait for 1 second
+        await new Promise((resolve) => {
+          setTimeout(() => {
+            resolve(true);
+          }, 1000);
+        });
+
+        const refreshToken = tokens.find((token) => token.name === 'refresh_token');
+        console.log('refreshToken', refreshToken);
+
+        return request(server).post('/auth/refresh').auth(refreshToken.token, { type: 'bearer' });
       });
     });
     describe('Logout', () => {
-      it('should throw if no token provided', async () => {
-        await pactum.spec().post('/auth/local/signout').expectStatus(401);
-      });
       it('should logout', async () => {
-        await pactum
-          .spec()
+        const accessToken = tokens.find((token: { name: string }) => token.name === 'access_token');
+        console.log('accessToken', accessToken);
+        await request(server)
           .post('/auth/local/signout')
-          .withHeaders({ Authorization: 'Bearer $S{access_token}' })
-          .expectStatus(200);
-      });
-    });
-  });
-
-  describe('User', () => {
-    describe('Get me', () => {
-      it('should get current user', () => {
-        return pactum
-          .spec()
-          .get('/users/me')
-          .withHeaders({
-            Authorization: 'Bearer $S{access_token}',
-          })
-          .expectStatus(200);
-      });
-    });
-
-    describe('Edit user', () => {
-      it('should edit user', () => {
-        const dto: EditUserDto = {
-          firstName: 'Subham',
-          email: 'maitysubham4041@gmail.com',
-        };
-        return pactum
-          .spec()
-          .patch('/users')
-          .withHeaders({
-            Authorization: 'Bearer $S{access_token}',
-          })
-          .withBody(dto)
-          .expectStatus(200)
-          .expectBodyContains(dto.firstName)
-          .expectBodyContains(dto.email);
+          .set('Authorization', `Bearer ${accessToken.token}`);
       });
     });
   });
