@@ -2,7 +2,11 @@
 
 > **Written By**: [ﾒΛM](https://github.com/Subham-Maity)
 
-## [Implementing Cookie Setup Commit](https://github.com/Subham-Maity/scalable_server_architecture/commit/e8487d981e8fa824360239a27a26077ca8568cf7?diff=split&w=1)
+## [Implementing Token set to header(auto using cookie)](https://github.com/Subham-Maity/scalable_server_architecture/commit/2ed1bad9fbee169ba014897b8d63dc51a31f693b)
 
+
+## [Check user](https://github.com/Subham-Maity/scalable_server_architecture/commit/65d29cee5eab30fee7c5585dc455f926ed16fcfe)
+
+## [Logger Setup](https://github.com/Subham-Maity/scalable_server_architecture/commit/dd4ad37231d3e7676eaf8005c9a55a3bd94a0444)
 
 
