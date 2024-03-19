@@ -1,13 +1,12 @@
 import { ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { AuthDto } from './dto';
-import { asyncErrorHandler } from '../errors/async-error-handler';
 import { PasswordHash, RtTokenService } from './encrypt';
 import { TokenService } from './token';
 import { Response } from 'express';
 import { ConfigId } from '../types';
-import { clearCookie, setCookie } from '../common/cookie/cookie';
-import { cookieOptionsAt, cookieOptionsRt } from '../common/cookie/cookie-options';
+import { clearCookie, cookieOptionsAt, cookieOptionsRt, setCookie } from '../common';
+import { asyncErrorHandler } from '../errors';
 
 @Injectable()
 export class AuthService {

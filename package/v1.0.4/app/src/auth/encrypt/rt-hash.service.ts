@@ -1,8 +1,8 @@
 import { Injectable } from '@nestjs/common';
-import { asyncErrorHandler } from '../../errors/async-error-handler';
 import { PrismaService } from '../../prisma/prisma.service';
 import { PasswordHash } from './hash.service';
 import { ConfigId } from '../../types';
+import { asyncErrorHandler } from '../../errors';
 
 @Injectable()
 export class RtTokenService {

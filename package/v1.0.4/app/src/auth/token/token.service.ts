@@ -1,9 +1,9 @@
 import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
 import { Injectable } from '@nestjs/common';
-import { asyncErrorHandler } from '../../errors/async-error-handler';
 import { JwtPayload, Tokens } from '../type';
 import { ConfigId } from '../../types';
+import { asyncErrorHandler } from '../../errors';
 
 @Injectable()
 export class TokenService {

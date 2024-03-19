@@ -1,9 +1,9 @@
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
-import { AllExceptionsFilter } from './errors/global-exception-filter';
 import { setupGlobalPipes } from './pipes';
 import { setupSwagger } from './swagger';
 import * as cookieParser from 'cookie-parser';
+import { AllExceptionsFilter } from './errors';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);

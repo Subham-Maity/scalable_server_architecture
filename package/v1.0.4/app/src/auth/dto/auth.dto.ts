@@ -1,6 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { IsEmail, IsNotEmpty, IsString, Matches, MaxLength, MinLength } from 'class-validator';
-import { IsDifferentFrom } from '../../common/decorator';
+import { IsDifferentFrom } from '../../common';
 
 export class AuthDto {
   @ApiProperty({

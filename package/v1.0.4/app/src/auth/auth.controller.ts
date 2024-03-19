@@ -3,7 +3,7 @@ import { AuthService } from './auth.service';
 import { AuthDto } from './dto';
 import { RtGuard } from './guard';
 import { GetCurrentUser, GetCurrentUserId } from './decorator';
-import { Public } from '../common/decorator';
+import { Public } from '../common';
 import { ConfigId } from '../types';
 import {
   ApiBadRequestResponse,
