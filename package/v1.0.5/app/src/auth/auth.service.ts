@@ -97,6 +97,13 @@ export class AuthService {
   /**Refresh Token*/
   refreshToken = asyncErrorHandler(
     async (userId: ConfigId, rt: string, res: Response): Promise<void> => {
+      if (!userId) {
+        throw new UnauthorizedException('User not found');
+      }
+
+      if (!rt) {
+        throw new UnauthorizedException('Refresh token not found');
+      }
       //find user by id
       const user = await this.prisma.user.findUnique({
         where: {
@@ -200,7 +207,7 @@ export class AuthService {
   ) {}
 
   /**Check User*/
-  checkUser(req: RequestWithUser): { id: string } {
+  checkUser(req: RequestWithUser): { id: ConfigId } {
     if (!req.user || !req.user.sub) {
       throw new UnauthorizedException();
     }

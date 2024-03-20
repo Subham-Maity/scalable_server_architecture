@@ -6,6 +6,7 @@ import {
   HttpStatus,
   Patch,
   Post,
+  Req,
   Request,
   Res,
   UseGuards,
@@ -13,7 +14,7 @@ import {
 import { AuthService } from './auth.service';
 import { AuthDto } from './dto';
 import { RtGuard } from './guard';
-import { GetCurrentUser, GetCurrentUserId } from './decorator';
+import { GetCurrentUserId } from './decorator';
 import { Public } from '../common';
 import { ConfigId } from '../types';
 import {
@@ -145,8 +146,7 @@ export class AuthController {
    bearer token: {refresh token}
    }
    * It will return a new access token and refresh token.
-   * @param userId
-   * @param refreshToken
+   * @param req
    * @param res
    */
 
@@ -165,10 +165,11 @@ export class AuthController {
   })
   @ApiUnauthorizedResponse({ status: 401, description: 'Unauthorized: No token provided.' })
   refreshTokens(
-    @GetCurrentUserId() userId: ConfigId,
-    @GetCurrentUser('refreshToken') refreshToken: string,
+    @Req() req: RequestWithUser,
     @Res({ passthrough: true }) res: Response,
   ): Promise<void> {
+    const userId = req.user.sub;
+    const refreshToken = req.user.refreshToken;
     return this.authService.refreshToken(userId, refreshToken, res);
   }
 
