@@ -35,10 +35,12 @@
 
 #### 📌 [Version 1.0.0](package/v1.0.0/documentation/README.md) - `focus`: basic structure, passport auth,basic dto, db setup,testing environment
 
-#### 📌 [Version 1.0.1](package/v1.0.1/documentation/README.md) - `focus`: refresh token, access token, Testing with Pactum
+#### 📌 [Version 1.0.1](package/v1.0.1/documentation/README.md) - `focus`: refresh token, access token, testing with pactum
 
 #### 📌 [Version 1.0.2](package/v1.0.2/documentation/README.md) - `focus`: swagger setup, swagger config
 
 #### 📌 [Version 1.0.3](package/v1.0.3/documentation/README.md) - `focus`: sending token using cookies
 
 #### 📌 [Version 1.0.4](package/v1.0.4/documentation/README.md) - `focus`: token set to header(auto using cookie), check user, logger
+
+#### 📌 [Version 1.0.4](package/v1.0.4/documentation/README.md) - `focus`: reset password using jwt reset password link ,
