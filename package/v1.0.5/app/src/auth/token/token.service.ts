@@ -15,11 +15,11 @@ export class TokenService {
     const [at, rt] = await Promise.all([
       this.jwtService.signAsync(jwtPayload, {
         secret: this.config.get<string>('JWT_LOCAL_AT_SECRET'),
-        expiresIn: '15m',
+        expiresIn: this.config.get<string>('JWT_LOCAL_AT_EXPIRES_IN'),
       }),
       this.jwtService.signAsync(jwtPayload, {
         secret: this.config.get<string>('JWT_LOCAL_RT_SECRET'),
-        expiresIn: '15d',
+        expiresIn: this.config.get<string>('JWT_LOCAL_RT_EXPIRES_IN'),
       }),
     ]);
     return {
