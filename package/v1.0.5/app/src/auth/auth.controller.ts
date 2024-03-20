@@ -4,6 +4,7 @@ import {
   Get,
   HttpCode,
   HttpStatus,
+  Patch,
   Post,
   Request,
   Res,
@@ -26,6 +27,7 @@ import {
 } from '@nestjs/swagger';
 import { AuthGuard } from '@nestjs/passport';
 import { RequestWithUser } from './type';
+import { Response } from 'express';
 
 @ApiTags('🔐 Authentication')
 @Controller('auth')
@@ -98,6 +100,45 @@ export class AuthController {
     @Res({ passthrough: true }) res: Response,
   ): Promise<void> {
     return this.authService.signoutLocal(userId, res);
+  }
+  /**
+   * POST: http://localhost:3333/auth/forgot-password
+   * It will generate a password reset link for the user.
+   * @param email
+   */
+  @Public()
+  @Post('forgot-password')
+  @ApiOperation({ summary: 'Request password reset' })
+  @ApiCreatedResponse({
+    status: 200,
+    description: 'Password reset link has been sent.',
+    type: 'application/text',
+  })
+  @ApiBadRequestResponse({ status: 400, description: 'Bad Request: Invalid email.' })
+  forgotPassword(@Body('email') email: string) {
+    const link = this.authService.resetPasswordRequest(email);
+    console.log(link);
+  }
+
+  /**
+   * PATCH: http://localhost:3333/auth/reset-password
+   * It will reset the password of the user.
+   * @param dto
+   * @param token
+   * @param res
+   */
+  @Public()
+  @Patch('reset-password')
+  @ApiOperation({ summary: 'Reset the password of the user' })
+  @ApiCreatedResponse({
+    status: 201,
+    description: 'The password has been successfully reset.',
+    type: 'application/text',
+  })
+  @ApiBadRequestResponse({ status: 400, description: 'Bad Request: Invalid data.' })
+  @ApiBody({ type: AuthDto, description: 'The user information' })
+  resetPassword(@Body() dto: AuthDto, @Body('token') token: string, @Res() res: Response) {
+    this.authService.resetPassword(dto, token, res).then((r) => console.log(r));
   }
 
   /** POST: http://localhost:3333/auth/refresh

@@ -13,10 +13,12 @@ import { ConfigId } from '../types';
 import { clearCookie, cookieOptionsAt, cookieOptionsRt, setCookie } from '../common';
 import { asyncErrorHandler } from '../errors';
 import { RequestWithUser } from './type';
+import { JwtService } from '@nestjs/jwt';
+import { ConfigService } from '@nestjs/config';
 
 @Injectable()
 export class AuthService {
-  /**Singup - Local*/
+  /**Singup/Register - Local*/
   signupLocal = asyncErrorHandler(async (dto: AuthDto, res: Response): Promise<void> => {
     const hash = await PasswordHash.hashData(dto.password);
     const user = await this.prisma.user.create({
@@ -36,7 +38,7 @@ export class AuthService {
     res.end();
   });
 
-  /**Singin - Local*/
+  /**Singin/Login - Local*/
   signinLocal = asyncErrorHandler(async (dto: AuthDto, res: Response): Promise<void> => {
     //find user
     const user = await this.prisma.user.findUnique({
@@ -91,6 +93,7 @@ export class AuthService {
     // End the response
     res.end();
   });
+
   /**Refresh Token*/
   refreshToken = asyncErrorHandler(
     async (userId: ConfigId, rt: string, res: Response): Promise<void> => {
@@ -124,7 +127,73 @@ export class AuthService {
     },
   );
 
+  /**Reset Password*/
+  //Purpose: reset link's token generation
+  // Generate a password reset link
+  resetPasswordRequest = asyncErrorHandler(async (email: string): Promise<string> => {
+    const user = await this.prisma.user.findUnique({ where: { email } });
+    if (!user) {
+      throw new NotFoundException('User not found');
+    }
+    const JWT_SECRET = this.configService.get('PASSWORD_RESET_LINK_SECRET') || 'secret-key';
+    const FrontendUrl =
+      this.configService.get('PASSWORD_RESET_LINK_FRONTEND_URL') || 'http://localhost:3000';
+    const payload = { email: user.email, id: user.id };
+    const token = this.jwtService.sign(payload, { secret: JWT_SECRET, expiresIn: '15m' });
+
+    console.log(`${FrontendUrl}/${user.id}/${token}`);
+
+    return `${FrontendUrl}/${user.id}/${token}`;
+  });
+
+  //Purpose: reset link's token validation
+  // Validate token for password reset
+  validateToken = asyncErrorHandler(
+    async (token: string): Promise<{ email: string; id: ConfigId }> => {
+      const JWT_SECRET = this.configService.get('PASSWORD_RESET_LINK_SECRET') || 'secret-key';
+      let payload: { email: string; id: ConfigId };
+      try {
+        payload = this.jwtService.verify(token, { secret: JWT_SECRET });
+      } catch (error) {
+        throw new UnauthorizedException('Invalid token');
+      }
+      return payload;
+    },
+  );
+  //Purpose: reset password
+  resetPassword = asyncErrorHandler(
+    async (dto: AuthDto, token: string, res: Response): Promise<void> => {
+      const payload = await this.validateToken(token);
+
+      const user = await this.prisma.user.findUnique({
+        where: {
+          email: payload.email,
+          id: payload.id,
+        },
+      });
+
+      if (!user) {
+        throw new NotFoundException('User not found');
+      }
+
+      const hashedPassword = await PasswordHash.hashData(dto.password);
+
+      await this.prisma.user.update({
+        where: {
+          id: user.id,
+        },
+        data: {
+          hash: hashedPassword,
+        },
+      });
+
+      res.send({ msg: 'Record Updated!' });
+    },
+  );
+
   constructor(
+    private configService: ConfigService,
+    private jwtService: JwtService,
     private prisma: PrismaService,
     private tokenService: TokenService,
     private rtTokenService: RtTokenService,
