@@ -15,9 +15,20 @@ import { asyncErrorHandler } from '../errors';
 import { RequestWithUser } from './type';
 import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
+import { generateOTP, OTPConfig } from './otp';
 
 @Injectable()
 export class AuthService {
+  private OTP: string | number;
+  private resetSession: boolean;
+  constructor(
+    private configService: ConfigService,
+    private jwtService: JwtService,
+    private prisma: PrismaService,
+    private tokenService: TokenService,
+    private rtTokenService: RtTokenService,
+  ) {}
+
   /**Singup/Register - Local*/
   signupLocal = asyncErrorHandler(async (dto: AuthDto, res: Response): Promise<void> => {
     const hash = await PasswordHash.hashData(dto.password);
@@ -135,9 +146,12 @@ export class AuthService {
   );
 
   /**Reset Password*/
+  //TODO: Redis Store the OTP
+  //TODO: RATE LIMIT Based on Email or IP
   //Purpose: reset link's token generation
   // Generate a password reset link
-  resetPasswordRequest = asyncErrorHandler(async (email: string): Promise<string> => {
+
+  resetPasswordRequest = asyncErrorHandler(async (email: string, res: Response): Promise<void> => {
     const user = await this.prisma.user.findUnique({ where: { email } });
     if (!user) {
       throw new NotFoundException('User not found');
@@ -146,12 +160,53 @@ export class AuthService {
     const FrontendUrl =
       this.configService.get('PASSWORD_RESET_LINK_FRONTEND_URL') || 'http://localhost:3000';
     const payload = { email: user.email, id: user.id };
-    const token = this.jwtService.sign(payload, { secret: JWT_SECRET, expiresIn: '15m' });
-
-    console.log(`${FrontendUrl}/${user.id}/${token}`);
-
-    return `${FrontendUrl}/${user.id}/${token}`;
+    const token = this.jwtService.sign(payload, {
+      secret: JWT_SECRET,
+      expiresIn: this.configService.get('PASSWORD_RESET_LINK_EXPIRES_IN') || '1m',
+    });
+    const config_otp: OTPConfig = {
+      length: 6,
+      type: 'string',
+      lowerCaseAlphabets: false,
+      upperCaseAlphabets: false,
+      digits: true,
+      specialChars: false,
+    };
+    this.OTP = generateOTP(config_otp);
+    const pass_reset_link = `${FrontendUrl}/reset-password/${user.id}/${token}`;
+    //TODO: Email the reset link
+    console.log(pass_reset_link);
+    // res.status(200).send({ msg: 'Password reset link has been sent.' });
+    res.status(200).send({ code: this.OTP, token: `${token}` });
   });
+
+  //Purpose: Verify the otp and token
+  verifyOTP = asyncErrorHandler(
+    async (code: string, token: string, res: Response): Promise<void> => {
+      const payload = await this.validateToken(token);
+      const user = await this.prisma.user.findUnique({
+        where: {
+          email: payload.email,
+          id: payload.id,
+        },
+      });
+      if (!user) {
+        throw new NotFoundException('User not found');
+      }
+      const email: string = user.email;
+      if (this.OTP === code) {
+        this.OTP = null;
+        this.resetSession = true;
+      } else {
+        throw new ForbiddenException('Invalid OTP');
+      }
+      res.status(201).json({
+        message: 'OTP verified successfully!',
+        email,
+        token,
+      });
+    },
+  );
 
   //Purpose: reset link's token validation
   // Validate token for password reset
@@ -167,10 +222,25 @@ export class AuthService {
       return payload;
     },
   );
+
+  //Purpose: reset session checks and reset local variables
+  localVariables = asyncErrorHandler(async (): Promise<void> => {
+    this.OTP = null;
+    this.resetSession = false;
+  });
+
   //Purpose: reset password
   resetPassword = asyncErrorHandler(
     async (dto: AuthDto, token: string, res: Response): Promise<void> => {
+      if (!this.resetSession) {
+        throw new ForbiddenException('Session expired!');
+      }
+
       const payload = await this.validateToken(token);
+
+      if (payload.email !== dto.email) {
+        throw new ForbiddenException('Invalid token');
+      }
 
       const user = await this.prisma.user.findUnique({
         where: {
@@ -194,17 +264,11 @@ export class AuthService {
         },
       });
 
-      res.send({ msg: 'Record Updated!' });
+      await this.localVariables();
+
+      res.status(200).send({ msg: 'Your password has been updated!' });
     },
   );
-
-  constructor(
-    private configService: ConfigService,
-    private jwtService: JwtService,
-    private prisma: PrismaService,
-    private tokenService: TokenService,
-    private rtTokenService: RtTokenService,
-  ) {}
 
   /**Check User*/
   checkUser(req: RequestWithUser): { id: ConfigId } {

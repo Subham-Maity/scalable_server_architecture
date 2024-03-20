@@ -34,6 +34,10 @@ import { Response } from 'express';
 @Controller('auth')
 export class AuthController {
   constructor(private authService: AuthService) {}
+  /*--------------------------*/
+  /**���������REGISTER���������*/
+  /*_________________________*/
+
   /** POST: http://localhost:3333/auth/local/signin
    "email": "subham@gmail.com",
    "password": "Codexam@123",
@@ -58,6 +62,10 @@ export class AuthController {
     return this.authService.signupLocal(dto, res);
   }
 
+  /*--------------------------*/
+  /**���������LOGIN���������*/
+  /*_________________________*/
+
   /** POST: http://localhost:3333/auth/local/signin
    "email": "subham@gmail.com",
    "password": "Codexam@123",
@@ -81,6 +89,10 @@ export class AuthController {
     return this.authService.signinLocal(dto, res);
   }
 
+  /*--------------------------*/
+  /**���������LOGOUT���������*/
+  /*_________________________*/
+
   /** POST: http://localhost:3333/auth/local/signout
    bearer token: {access token}
    }
@@ -102,10 +114,41 @@ export class AuthController {
   ): Promise<void> {
     return this.authService.signoutLocal(userId, res);
   }
+
+  /*-----------------------------------*/
+  /**���������RESET PASSWORD���������*/
+  /*_______________________________*/
+
+  /** Flow of Password Reset:
+   1. User enters their email address on the password reset page of your application and
+   clicks on the "Reset Password" button.
+   Your application sends a POST request to `/auth/forgot-password` with the user's email in the request body.
+
+   2. Server generates an OTP and a password reset link that includes a JWT token.
+   The JWT token contains the user's email and ID. The server sends the OTP and the reset link to the user's email.
+
+   3. The user checks their email, finds the OTP, and enters it on the password reset page of the application.
+   The application stores the JWT token from the reset link.
+
+   4. Application sends a POST request to `/auth/verify-otp`
+   with the OTP and the stored JWT token in the request body.
+
+   5. The server verifies the OTP and the JWT token.
+   If they are valid, the server returns the user's email and the JWT token in the response.
+   Need to store the JWT token and the user's email in the application's state.
+
+   6. The user enters their new password on the password reset page of the application.
+
+   7.The application sends a PATCH request to `/auth/reset-password` with the new password,
+   the user's email, and the stored JWT token from the state in the request body.
+
+   8.The server resets the user's password and returns a confirmation message.
+   */
   /**
    * POST: http://localhost:3333/auth/forgot-password
-   * It will generate a password reset link for the user.
+   * It will generate a password reset link for the user also send an OTP to the user.
    * @param email
+   * @param res
    */
   @Public()
   @Post('forgot-password')
@@ -116,9 +159,24 @@ export class AuthController {
     type: 'application/text',
   })
   @ApiBadRequestResponse({ status: 400, description: 'Bad Request: Invalid email.' })
-  forgotPassword(@Body('email') email: string) {
-    const link = this.authService.resetPasswordRequest(email);
-    console.log(link);
+  forgotPassword(@Body('email') email: string, @Res() res: Response) {
+    return this.authService.resetPasswordRequest(email, res);
+  }
+  /**
+   * POST: http://localhost:3333/auth/verify-otp
+   * It will verify the OTP.
+   * @param code
+   * @param token
+   * @param res
+   */
+  @Public()
+  @Post('verify-otp')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Verify OTP' })
+  @ApiOkResponse({ status: 200, description: 'The OTP has been successfully verified.' })
+  @ApiBadRequestResponse({ status: 400, description: 'Bad Request: Invalid data.' })
+  verifyOTP(@Body('code') code: string, @Body('token') token: string, @Res() res: Response) {
+    return this.authService.verifyOTP(code, token, res);
   }
 
   /**
@@ -130,6 +188,7 @@ export class AuthController {
    */
   @Public()
   @Patch('reset-password')
+  @HttpCode(HttpStatus.CREATED)
   @ApiOperation({ summary: 'Reset the password of the user' })
   @ApiCreatedResponse({
     status: 201,
@@ -139,8 +198,12 @@ export class AuthController {
   @ApiBadRequestResponse({ status: 400, description: 'Bad Request: Invalid data.' })
   @ApiBody({ type: AuthDto, description: 'The user information' })
   resetPassword(@Body() dto: AuthDto, @Body('token') token: string, @Res() res: Response) {
-    this.authService.resetPassword(dto, token, res).then((r) => console.log(r));
+    return this.authService.resetPassword(dto, token, res);
   }
+
+  /*-----------------------------*/
+  /**���������NEW TOKEN���������*/
+  /*__________________________*/
 
   /** POST: http://localhost:3333/auth/refresh
    bearer token: {refresh token}
@@ -172,6 +235,10 @@ export class AuthController {
     const refreshToken = req.user.refreshToken;
     return this.authService.refreshToken(userId, refreshToken, res);
   }
+
+  /*-----------------------------*/
+  /**���������CHECK AUTH���������*/
+  /*__________________________*/
 
   /** POST: http://localhost:3333/auth/check
    bearer token: {access token}
