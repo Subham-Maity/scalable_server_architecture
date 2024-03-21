@@ -46,3 +46,5 @@ More.....
 #### 📌 [Version 1.0.4](package/v1.0.4/documentation/README.md) - `focus`: token set to header(auto using cookie), check user, logger
 
 #### 📌 [Version 1.0.5](package/v1.0.5/documentation/README.md) - `focus`: reset password using jwt reset password link with OTP verification, rt token(fix) generate without at,
+
+#### 📌 [Version 1.0.5](package/v1.0.5/documentation/README.md) - `focus`: Email with nodemailer, 0Auth Gmail 

@@ -7,9 +7,13 @@ import { ConfigModule } from '@nestjs/config';
 import { AtStrategy, RtStrategy } from './strategies';
 import { RtTokenService } from './encrypt';
 import { JwtSignService, JwtVerifyService } from './jwt';
+import { MailModule, MailService } from '../mail';
+import { Mail0AuthService } from '../mail/mail0Auth.service';
+import { Mail0AuthModule } from '../mail/mail0Auth.module';
+import { MailConfig } from '../mail/config';
 
 @Module({
-  imports: [JwtModule.register({}), ConfigModule],
+  imports: [JwtModule.register({}), ConfigModule, MailModule, Mail0AuthModule],
   controllers: [AuthController],
   providers: [
     AuthService,
@@ -20,6 +24,9 @@ import { JwtSignService, JwtVerifyService } from './jwt';
     RtTokenService,
     JwtSignService,
     JwtVerifyService,
+    MailService,
+    Mail0AuthService,
+    MailConfig,
   ],
 })
 export class AuthModule {}

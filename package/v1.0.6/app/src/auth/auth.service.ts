@@ -4,7 +4,6 @@ import {
   NotFoundException,
   UnauthorizedException,
 } from '@nestjs/common';
-import { PrismaService } from '../prisma/prisma.service';
 import { AuthDto } from './dto';
 import { PasswordHash, RtTokenService } from './encrypt';
 import { TokenService } from './token';
@@ -16,6 +15,9 @@ import { RequestWithUser } from './type';
 import { ConfigService } from '@nestjs/config';
 import { generateOTP, OTPConfig } from './otp';
 import { JwtSignService, JwtVerifyService } from './jwt';
+import { MailService } from '../mail';
+import { PrismaService } from '../prisma';
+import { Mail0AuthService } from '../mail/mail0Auth.service';
 
 @Injectable()
 export class AuthService {
@@ -28,6 +30,8 @@ export class AuthService {
     private rtTokenService: RtTokenService,
     private jwtSignService: JwtSignService,
     private jwtVerifyService: JwtVerifyService,
+    private mailService: MailService,
+    private mail0AuthService: Mail0AuthService,
   ) {}
 
   /**Singup/Register - Local*/
@@ -41,6 +45,15 @@ export class AuthService {
     });
     const tokens = await this.tokenService.getTokens(user.id, user.email);
     await this.rtTokenService.updateRtHash(user.id, tokens.refresh_token);
+
+    await this.mail0AuthService.sendMail0Auth(
+      dto.email,
+      'Welcome to Our Service',
+      'register-email',
+      {
+        name: dto.email,
+      },
+    );
 
     // Set tokens in cookies
     setCookie(res, 'access_token', tokens.access_token, cookieOptionsAt);

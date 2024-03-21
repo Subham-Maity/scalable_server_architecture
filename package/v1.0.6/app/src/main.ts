@@ -16,7 +16,7 @@ async function bootstrap() {
   setupGlobalPipes(app);
   setupSwagger(app);
   const configService = app.get(ConfigService);
-  await app.listen(port);
+  await app.listen(configService.get('port') || port);
   return configService;
 }
 
