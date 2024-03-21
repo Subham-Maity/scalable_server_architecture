@@ -9,14 +9,7 @@ export interface OTPConfig {
   specialChars: boolean;
 }
 
-export function generateOTP(config: {
-  lowerCaseAlphabets: boolean;
-  specialChars: boolean;
-  upperCaseAlphabets: boolean;
-  length: number;
-  digits: boolean;
-  type: string;
-}): string | number {
+export function generateOTP(config: OTPConfig): string | number {
   const lowerCase = 'abcdefghijklmnopqrstuvwxyz';
   const upperCase = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
   const numbers = '0123456789';

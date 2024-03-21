@@ -13,9 +13,9 @@ import { ConfigId } from '../types';
 import { clearCookie, cookieOptionsAt, cookieOptionsRt, setCookie } from '../common';
 import { asyncErrorHandler } from '../errors';
 import { RequestWithUser } from './type';
-import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
 import { generateOTP, OTPConfig } from './otp';
+import { JwtSignService, JwtVerifyService } from './jwt';
 
 @Injectable()
 export class AuthService {
@@ -23,10 +23,11 @@ export class AuthService {
   private resetSession: boolean;
   constructor(
     private configService: ConfigService,
-    private jwtService: JwtService,
     private prisma: PrismaService,
     private tokenService: TokenService,
     private rtTokenService: RtTokenService,
+    private jwtSignService: JwtSignService,
+    private jwtVerifyService: JwtVerifyService,
   ) {}
 
   /**Singup/Register - Local*/
@@ -156,14 +157,13 @@ export class AuthService {
     if (!user) {
       throw new NotFoundException('User not found');
     }
-    const JWT_SECRET = this.configService.get('PASSWORD_RESET_LINK_SECRET') || 'secret-key';
+
     const FrontendUrl =
       this.configService.get('PASSWORD_RESET_LINK_FRONTEND_URL') || 'http://localhost:3000';
+    const JWT_SECRET = this.configService.get('PASSWORD_RESET_LINK_SECRET') || 'secret-key';
+    const JWT_EXPIRES_IN = this.configService.get('PASSWORD_RESET_LINK_EXPIRES_IN') || '1m';
     const payload = { email: user.email, id: user.id };
-    const token = this.jwtService.sign(payload, {
-      secret: JWT_SECRET,
-      expiresIn: this.configService.get('PASSWORD_RESET_LINK_EXPIRES_IN') || '1m',
-    });
+    const token = this.jwtSignService.sign(payload, JWT_SECRET, JWT_EXPIRES_IN);
     const config_otp: OTPConfig = {
       length: 6,
       type: 'string',
@@ -215,7 +215,7 @@ export class AuthService {
       const JWT_SECRET = this.configService.get('PASSWORD_RESET_LINK_SECRET') || 'secret-key';
       let payload: { email: string; id: ConfigId };
       try {
-        payload = this.jwtService.verify(token, { secret: JWT_SECRET });
+        payload = this.jwtVerifyService.verify(token, JWT_SECRET);
       } catch (error) {
         throw new UnauthorizedException('Invalid token');
       }

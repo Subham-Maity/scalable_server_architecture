@@ -6,10 +6,20 @@ import { TokenService } from './token';
 import { ConfigModule } from '@nestjs/config';
 import { AtStrategy, RtStrategy } from './strategies';
 import { RtTokenService } from './encrypt';
+import { JwtSignService, JwtVerifyService } from './jwt';
 
 @Module({
   imports: [JwtModule.register({}), ConfigModule],
   controllers: [AuthController],
-  providers: [AuthService, JwtService, AtStrategy, RtStrategy, TokenService, RtTokenService],
+  providers: [
+    AuthService,
+    JwtService,
+    AtStrategy,
+    RtStrategy,
+    TokenService,
+    RtTokenService,
+    JwtSignService,
+    JwtVerifyService,
+  ],
 })
 export class AuthModule {}
