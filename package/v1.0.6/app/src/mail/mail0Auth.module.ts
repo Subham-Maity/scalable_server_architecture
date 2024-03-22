@@ -23,9 +23,7 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
         const accessToken = await oAuth2Client.getAccessToken();
         return {
           transport: {
-            host: 'smtp.gmail.com',
-            port: 465,
-            secure: true,
+            service: 'gmail',
             auth: {
               type: 'OAuth2',
               user: mailConfig.senderGmailAddress,

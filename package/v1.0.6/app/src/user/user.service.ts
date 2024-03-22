@@ -1,8 +1,8 @@
 import { Injectable } from '@nestjs/common';
-import { PrismaService } from '../prisma/prisma.service';
 import { EditUserDto } from './dto';
 import { ConfigId } from '../types';
 import { asyncErrorHandler } from '../errors';
+import { PrismaService } from '../prisma';
 
 @Injectable()
 export class UserService {

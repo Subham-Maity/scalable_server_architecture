@@ -15,9 +15,8 @@ import { RequestWithUser } from './type';
 import { ConfigService } from '@nestjs/config';
 import { generateOTP, OTPConfig } from './otp';
 import { JwtSignService, JwtVerifyService } from './jwt';
-import { MailService } from '../mail';
+import { Mail0AuthService, MailService } from '../mail';
 import { PrismaService } from '../prisma';
-import { Mail0AuthService } from '../mail/mail0Auth.service';
 
 @Injectable()
 export class AuthService {
@@ -162,6 +161,8 @@ export class AuthService {
   /**Reset Password*/
   //TODO: Redis Store the OTP
   //TODO: RATE LIMIT Based on Email or IP
+  //TODO: MAIL
+  //RESET PASSWORD WITH OLD PASSWORD
   //Purpose: reset link's token generation
   // Generate a password reset link
 

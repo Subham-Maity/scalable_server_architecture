@@ -7,9 +7,8 @@ import { ConfigModule } from '@nestjs/config';
 import { AtStrategy, RtStrategy } from './strategies';
 import { RtTokenService } from './encrypt';
 import { JwtSignService, JwtVerifyService } from './jwt';
-import { MailModule, MailService } from '../mail';
-import { Mail0AuthService } from '../mail/mail0Auth.service';
-import { Mail0AuthModule } from '../mail/mail0Auth.module';
+import { Mail0AuthModule, Mail0AuthService, MailModule, MailService } from '../mail';
+
 import { MailConfig } from '../mail/config';
 
 @Module({
