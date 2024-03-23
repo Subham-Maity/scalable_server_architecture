@@ -15,8 +15,12 @@ import { RequestWithUser } from './type';
 import { ConfigService } from '@nestjs/config';
 import { generateOTP, OTPConfig } from './otp';
 import { JwtSignService, JwtVerifyService } from './jwt';
-import { Mail0AuthService, MailService } from '../mail';
 import { PrismaService } from '../prisma';
+import { MAIL_QUEUE } from '../constants';
+import { Queue } from 'bull';
+import { InjectQueue } from '@nestjs/bull';
+import { MailJob } from '../bull/types/mail-jobs.i';
+import { BullService } from '../bull';
 
 @Injectable()
 export class AuthService {
@@ -29,10 +33,16 @@ export class AuthService {
     private rtTokenService: RtTokenService,
     private jwtSignService: JwtSignService,
     private jwtVerifyService: JwtVerifyService,
-    private mailService: MailService,
-    private mail0AuthService: Mail0AuthService,
+    private bullService: BullService,
+    @InjectQueue(MAIL_QUEUE) private readonly mailQueue: Queue,
   ) {}
 
+  async sendMail(jobData: MailJob) {
+    await this.bullService.addJob({
+      type: 'mail',
+      data: jobData,
+    });
+  }
   /**Singup/Register - Local*/
   signupLocal = asyncErrorHandler(async (dto: AuthDto, res: Response): Promise<void> => {
     const hash = await PasswordHash.hashData(dto.password);
@@ -45,15 +55,17 @@ export class AuthService {
     const tokens = await this.tokenService.getTokens(user.id, user.email);
     await this.rtTokenService.updateRtHash(user.id, tokens.refresh_token);
 
-    await this.mail0AuthService.sendMail0Auth(
-      dto.email,
-      'Welcome to Our Service',
-      'register-email',
-      {
-        name: dto.email,
+    await this.bullService.addJob({
+      type: 'mail',
+      data: {
+        email: dto.email,
+        subject: 'Welcome to Our Service',
+        template: 'register-email',
+        context: {
+          name: dto.email,
+        },
       },
-    );
-
+    });
     // Set tokens in cookies
     setCookie(res, 'access_token', tokens.access_token, cookieOptionsAt);
     setCookie(res, 'refresh_token', tokens.refresh_token, cookieOptionsRt);
@@ -164,7 +176,7 @@ export class AuthService {
   //TODO: MAIL
   //RESET PASSWORD WITH OLD PASSWORD
   //Purpose: reset link's token generation
-  // Generate a password reset link
+  //Generate a password reset link
 
   resetPasswordRequest = asyncErrorHandler(async (email: string, res: Response): Promise<void> => {
     const user = await this.prisma.user.findUnique({ where: { email } });

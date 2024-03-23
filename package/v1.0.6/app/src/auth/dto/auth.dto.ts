@@ -1,5 +1,13 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsEmail, IsNotEmpty, IsString, Matches, MaxLength, MinLength } from 'class-validator';
+import {
+  IsEmail,
+  IsNotEmpty,
+  IsString,
+  Length,
+  Matches,
+  MaxLength,
+  MinLength,
+} from 'class-validator';
 import { IsDifferentFrom } from '../../common';
 
 export class AuthDto {
@@ -11,6 +19,7 @@ export class AuthDto {
   @IsEmail({}, { message: 'Invalid email format.' })
   @IsNotEmpty({ message: 'Email is required.' })
   @IsString({ message: 'Email must be a string.' })
+  @Length(5, 255)
   email: string;
 
   @ApiProperty({

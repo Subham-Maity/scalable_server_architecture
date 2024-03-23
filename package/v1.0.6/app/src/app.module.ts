@@ -7,6 +7,7 @@ import { AtGuard } from './auth/guard';
 import { APP_GUARD } from '@nestjs/core';
 import { LoggerMiddleware } from './utils';
 import { PrismaModule } from './prisma';
+import { QueueModule } from './bull';
 
 @Module({
   imports: [
@@ -17,6 +18,7 @@ import { PrismaModule } from './prisma';
     AuthModule,
     UserModule,
     PrismaModule,
+    QueueModule,
   ],
   //purpose: add AtGuard to the global guard list
   providers: [

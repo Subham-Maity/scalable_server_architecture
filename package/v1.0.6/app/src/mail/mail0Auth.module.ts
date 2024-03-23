@@ -2,9 +2,9 @@ import { Module } from '@nestjs/common';
 import { MailerModule } from '@nestjs-modules/mailer';
 import { HandlebarsAdapter } from '@nestjs-modules/mailer/dist/adapters/handlebars.adapter';
 import { google } from 'googleapis';
-import { MailConfig } from './config';
 import { Mail0AuthService } from './mail0Auth.service';
 import { ConfigModule, ConfigService } from '@nestjs/config';
+import { MailConfig } from './config/mail.config';
 /**For zero auth setup Read This Steps Carefully:
  * https://github.com/Subham-Maity/fullstack_advance/blob/main/README/0AuthSetps.md */
 @Module({
