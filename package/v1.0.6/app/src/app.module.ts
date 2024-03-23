@@ -8,7 +8,7 @@ import { APP_GUARD } from '@nestjs/core';
 import { LoggerMiddleware } from './utils';
 import { PrismaModule } from './prisma';
 import { BullService, QueueModule } from './queue/bull';
-import { validateConfig } from './validation/config.z';
+import { validateConfig } from './validation/config.joi';
 
 @Module({
   imports: [
