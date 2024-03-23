@@ -7,13 +7,15 @@ import { AtGuard } from './auth/guard';
 import { APP_GUARD } from '@nestjs/core';
 import { LoggerMiddleware } from './utils';
 import { PrismaModule } from './prisma';
-import { QueueModule } from './bull';
+import { BullService, QueueModule } from './queue/bull';
+import { validateConfig } from './validation/config.z';
 
 @Module({
   imports: [
     ConfigModule.forRoot({
       isGlobal: true,
       load: [configuration],
+      validationSchema: validateConfig,
     }),
     AuthModule,
     UserModule,
@@ -26,6 +28,7 @@ import { QueueModule } from './bull';
       provide: APP_GUARD,
       useClass: AtGuard,
     },
+    BullService,
   ],
 })
 export class AppModule implements NestModule {

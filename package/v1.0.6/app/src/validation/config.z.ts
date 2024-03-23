@@ -1,15 +1,6 @@
-import { z } from 'zod';
+import * as Joi from 'joi';
 
-export const validateConfig = (config: unknown) => {
-  const parsed = z
-    .object({
-      DATABASE_URL: z.string().url().min(1),
-    })
-    .safeParse(config);
-
-  if (!parsed.success) {
-    throw new Error('Config validation error');
-  }
-
-  return parsed.data;
-};
+export const validateConfig = Joi.object({
+  DATABASE_URL: Joi.string().uri().required(),
+  PORT: Joi.number().required(),
+});

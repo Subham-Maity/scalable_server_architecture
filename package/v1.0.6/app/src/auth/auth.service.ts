@@ -16,11 +16,11 @@ import { ConfigService } from '@nestjs/config';
 import { generateOTP, OTPConfig } from './otp';
 import { JwtSignService, JwtVerifyService } from './jwt';
 import { PrismaService } from '../prisma';
-import { MAIL_QUEUE } from '../constants';
+import { MAIL_QUEUE } from '../queue/bull/constant';
 import { Queue } from 'bull';
 import { InjectQueue } from '@nestjs/bull';
-import { MailJob } from '../bull/types/mail-jobs.i';
-import { BullService } from '../bull';
+import { MailJob } from '../queue/bull/types/mail-jobs.i';
+import { BullService } from '../queue/bull';
 
 @Injectable()
 export class AuthService {

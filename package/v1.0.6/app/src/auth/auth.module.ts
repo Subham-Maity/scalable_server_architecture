@@ -8,7 +8,7 @@ import { AtStrategy, RtStrategy } from './strategies';
 import { RtTokenService } from './encrypt';
 import { JwtSignService, JwtVerifyService } from './jwt';
 import { Mail0AuthModule, Mail0AuthService, MailConfig, MailModule, MailService } from '../mail';
-import { BullService, QueueModule } from '../bull';
+import { BullService, QueueModule } from '../queue/bull';
 
 @Module({
   imports: [JwtModule.register({}), ConfigModule, MailModule, Mail0AuthModule, QueueModule],
