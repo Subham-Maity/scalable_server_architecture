@@ -4,6 +4,7 @@ import {
   Get,
   HttpCode,
   HttpStatus,
+  Param,
   Patch,
   Post,
   Req,
@@ -13,7 +14,7 @@ import {
 } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { AuthDto } from './dto';
-import { RtGuard } from './guard';
+import { CheckUniqueEmailGuard, CheckUserExistsGuard, RtGuard } from './guard';
 import { GetCurrentUserId } from './decorator';
 import { Public } from '../common';
 import { ConfigId } from '../types';
@@ -59,6 +60,7 @@ export class AuthController {
   })
   @ApiBadRequestResponse({ status: 400, description: 'Bad Request: Invalid data.' })
   @ApiBody({ type: AuthDto, description: 'The user information' })
+  @UseGuards(CheckUniqueEmailGuard)
   signupLocal(@Body() dto: AuthDto, @Res({ passthrough: true }) res: Response): Promise<void> {
     return this.authService.signupLocal(dto, res);
   }
@@ -75,6 +77,7 @@ export class AuthController {
    * @param res
    */
   @Public()
+  @UseGuards(CheckUserExistsGuard)
   @Post('/local/signin')
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Sign in an existing user' })
@@ -90,6 +93,11 @@ export class AuthController {
     return this.authService.signinLocal(dto, res);
   }
 
+  @Public()
+  @Get('verify-account/:token')
+  verifyAccount(@Param('token') token: string, @Res() res: Response) {
+    return this.authService.activateUser(token, res);
+  }
   /*--------------------------*/
   /**���������LOGOUT���������*/
   /*_________________________*/
@@ -149,9 +157,9 @@ export class AuthController {
    * POST: http://localhost:3333/auth/forgot-password
    * It will generate a password reset link for the user also send an OTP to the user.
    * @param email
-   * @param res
    */
   @Public()
+  @UseGuards(CheckUserExistsGuard)
   @Post('forgot-password')
   @ApiOperation({ summary: 'Request password reset' })
   @ApiCreatedResponse({
@@ -160,8 +168,8 @@ export class AuthController {
     type: 'application/text',
   })
   @ApiBadRequestResponse({ status: 400, description: 'Bad Request: Invalid email.' })
-  forgotPassword(@Body('email') email: string, @Res() res: Response) {
-    return this.authService.resetPasswordRequest(email, res);
+  forgotPassword(@Body('email') email: string) {
+    return this.authService.resetPasswordRequest(email);
   }
   /**
    * POST: http://localhost:3333/auth/verify-otp

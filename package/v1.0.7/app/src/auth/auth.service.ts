@@ -1,6 +1,8 @@
 import {
+  BadRequestException,
   ForbiddenException,
   Injectable,
+  InternalServerErrorException,
   NotFoundException,
   UnauthorizedException,
 } from '@nestjs/common';
@@ -11,15 +13,11 @@ import { Response } from 'express';
 import { ConfigId } from '../types';
 import { clearCookie, cookieOptionsAt, cookieOptionsRt, setCookie } from '../common';
 import { asyncErrorHandler } from '../errors';
-import { RequestWithUser } from './type';
+import { RequestWithUser, UserData } from './type';
 import { ConfigService } from '@nestjs/config';
 import { generateOTP, OTPConfig } from './otp';
 import { JwtSignService, JwtVerifyService } from './jwt';
 import { PrismaService } from '../prisma';
-import { MAIL_QUEUE } from '../queue/bull/constant';
-import { Queue } from 'bull';
-import { InjectQueue } from '@nestjs/bull';
-import { MailJob } from '../queue/bull/types/mail-jobs.i';
 import { BullService } from '../queue/bull';
 
 @Injectable()
@@ -34,41 +32,92 @@ export class AuthService {
     private jwtSignService: JwtSignService,
     private jwtVerifyService: JwtVerifyService,
     private bullService: BullService,
-    @InjectQueue(MAIL_QUEUE) private readonly mailQueue: Queue,
   ) {}
 
-  /**Singup/Register - Local*/
-  signupLocal = asyncErrorHandler(async (dto: AuthDto, res: Response): Promise<void> => {
-    const hash = await PasswordHash.hashData(dto.password);
-    const user = await this.prisma.user.create({
-      data: {
-        email: dto.email,
-        hash,
-      },
-    });
-    const tokens = await this.tokenService.getTokens(user.id, user.email);
-    await this.rtTokenService.updateRtHash(user.id, tokens.refresh_token);
+  /**SingUp/Register - Local*/
+  // Generates token for the signup verification link
+  generateSignupVerificationToken = asyncErrorHandler(async (user: UserData) => {
+    const JWT_SECRET: string = this.configService.get('REGISTER_LINK_SECRET') || 'secret-key';
+    const JWT_EXPIRES_IN: string = this.configService.get('REGISTER_LINK_EXPIRES_IN') || '1m';
+    return this.jwtSignService.sign(user, JWT_SECRET, JWT_EXPIRES_IN);
+  });
+  //Generate a verification link for the user
+  generateSignupVerificationLink = asyncErrorHandler(async (user: UserData) => {
+    const verificationToken = await this.generateSignupVerificationToken(user);
+    const CLIENT_APP_URL: string = this.configService.get<string>('REGISTER_LINK_FRONTEND_URL');
+    if (!CLIENT_APP_URL) throw new InternalServerErrorException('Client app url not found!');
+    return `${CLIENT_APP_URL}/auth/verify-account/${verificationToken}`;
+  });
 
+  // Verify the token generated for the signup verification link
+  verifyGeneratedSignupVerificationToken = asyncErrorHandler(async (token: string) => {
+    const JWT_SECRET: string = this.configService.get('REGISTER_LINK_SECRET') || 'secret-key';
+    const payload = this.jwtVerifyService.verify(token, JWT_SECRET);
+    if (!payload) throw new NotFoundException('Invalid token');
+    return payload;
+  });
+
+  //TODO: Rate limit on IP address
+  // If user not exists it will send the link to the user's email
+  signupLocal = asyncErrorHandler(async (dto: AuthDto): Promise<void> => {
+    const hash = await PasswordHash.hashData(dto.password);
+    const user = {
+      email: dto.email,
+      hash,
+    };
+    const verificationLink = await this.generateSignupVerificationLink(user);
     await this.bullService.addJob({
       type: 'mail',
       data: {
         email: dto.email,
-        subject: 'Welcome to Our Service',
-        template: 'register-email',
+        subject: 'Verify your account!',
+        template: './auth/signin/register-email',
         context: {
           name: dto.email,
+          validation: verificationLink,
         },
       },
     });
-    // Set tokens in cookies
-    setCookie(res, 'access_token', tokens.access_token, cookieOptionsAt);
-    setCookie(res, 'refresh_token', tokens.refresh_token, cookieOptionsRt);
+  });
+  // This will create the user if user email is not present in the database
+  activateUser = asyncErrorHandler(async (token: string, res: Response): Promise<void> => {
+    const payload = await this.verifyGeneratedSignupVerificationToken(token);
+    const { email, hash } = payload;
 
-    // End the response
-    res.end();
+    // Check if the user's email already exists in the database
+    const existUser = await this.prisma.user.findUnique({
+      where: {
+        email,
+      },
+    });
+
+    if (existUser) {
+      throw new BadRequestException('User already exist with this email!');
+    }
+    // Create the user in the database
+    await this.prisma.user.create({
+      data: {
+        email,
+        hash,
+      },
+    });
+
+    await this.bullService.addJob({
+      type: 'mail',
+      data: {
+        email: payload.email,
+        subject: 'Thanks for register!',
+        template: './auth/signin/welcome',
+        context: {
+          name: payload.email,
+        },
+      },
+    });
+    // Redirect the user to the login page
+    res.redirect('/login');
   });
 
-  /**Singin/Login - Local*/
+  /**SingIn/Login - Local*/
   signinLocal = asyncErrorHandler(async (dto: AuthDto, res: Response): Promise<void> => {
     //find user
     const user = await this.prisma.user.findUnique({
@@ -76,14 +125,9 @@ export class AuthService {
         email: dto.email,
       },
     });
-    //return error if user not found
-    if (!user) {
-      throw new NotFoundException('User not found');
-    }
     //verify password
     const passwordMatches = await PasswordHash.verifyPassword(user.hash, dto.password);
 
-    //return error if password does not match
     if (!passwordMatches) throw new ForbiddenException('Password does not match');
 
     //token created and returned
@@ -167,23 +211,29 @@ export class AuthService {
   /**Reset Password*/
   //TODO: Redis Store the OTP
   //TODO: RATE LIMIT Based on Email or IP
-  //TODO: MAIL
-  //RESET PASSWORD WITH OLD PASSWORD
-  //Purpose: reset link's token generation
-  //Generate a password reset link
+  // Generate a token for the password reset request
+  generateResetPasswordRequestToken = asyncErrorHandler(
+    async (user: UserData, JWT_SECRET: string, JWT_EXPIRES_IN: string) => {
+      const payload = { email: user.email, id: user.id };
+      const token = this.jwtSignService.sign(payload, JWT_SECRET, JWT_EXPIRES_IN);
+      if (!token)
+        throw new InternalServerErrorException('Something went wrong while generating the token');
+      return token;
+    },
+  );
 
-  resetPasswordRequest = asyncErrorHandler(async (email: string, res: Response): Promise<void> => {
-    const user = await this.prisma.user.findUnique({ where: { email } });
-    if (!user) {
-      throw new NotFoundException('User not found');
-    }
+  // Generate Reset Password Verification Link
+  generateResetPasswordVerificationLink = asyncErrorHandler(async (user: UserData) => {
+    const JWT_SECRET: string = this.configService.get('PASSWORD_RESET_LINK_SECRET') || 'secret-key';
+    const JWT_EXPIRES_IN: string = this.configService.get('PASSWORD_RESET_LINK_EXPIRES_IN') || '1m';
+    return await this.generateResetPasswordRequestToken(user, JWT_SECRET, JWT_EXPIRES_IN);
+  });
 
-    const FrontendUrl =
-      this.configService.get('PASSWORD_RESET_LINK_FRONTEND_URL') || 'http://localhost:3000';
-    const JWT_SECRET = this.configService.get('PASSWORD_RESET_LINK_SECRET') || 'secret-key';
-    const JWT_EXPIRES_IN = this.configService.get('PASSWORD_RESET_LINK_EXPIRES_IN') || '1m';
-    const payload = { email: user.email, id: user.id };
-    const token = this.jwtSignService.sign(payload, JWT_SECRET, JWT_EXPIRES_IN);
+  //Return the password reset link with otp
+  returnPasswordResetLinkWithOtp = asyncErrorHandler(async (user: UserData) => {
+    const verificationToken = await this.generateResetPasswordVerificationLink(user);
+    const FrontendUrl = this.configService.get<string>('PASSWORD_RESET_LINK_FRONTEND_URL');
+    if (!FrontendUrl) throw new InternalServerErrorException('Frontend url not found!');
     const config_otp: OTPConfig = {
       length: 6,
       type: 'string',
@@ -193,11 +243,30 @@ export class AuthService {
       specialChars: false,
     };
     this.OTP = generateOTP(config_otp);
-    const pass_reset_link = `${FrontendUrl}/reset-password/${user.id}/${token}`;
-    //TODO: Email the reset link
-    console.log(pass_reset_link);
-    // res.status(200).send({ msg: 'Password reset link has been sent.' });
-    res.status(200).send({ code: this.OTP, token: `${token}` });
+    const pass_reset_link = `${FrontendUrl}/auth/reset-password/${user.id}/${verificationToken}`;
+    return { code: this.OTP, link: `${pass_reset_link}` };
+  });
+
+  // Reset Password Request
+  resetPasswordRequest = asyncErrorHandler(async (email: string): Promise<void> => {
+    const user = await this.prisma.user.findUnique({ where: { email } });
+    if (!user) throw new BadRequestException('User not found');
+
+    const { code, link } = await this.returnPasswordResetLinkWithOtp(user);
+
+    await this.bullService.addJob({
+      type: 'mail',
+      data: {
+        email: email,
+        subject: 'Reset Password Link',
+        template: './auth/reset-password/reset-password-link-code',
+        context: {
+          name: email,
+          validation: link,
+          otp: code,
+        },
+      },
+    });
   });
 
   //Purpose: Verify the otp and token
@@ -285,6 +354,18 @@ export class AuthService {
       });
 
       await this.localVariables();
+
+      await this.bullService.addJob({
+        type: 'mail',
+        data: {
+          email: payload.email,
+          subject: 'Password Changed',
+          template: './auth/reset-password/password-changed',
+          context: {
+            name: payload.email,
+          },
+        },
+      });
 
       res.status(200).send({ msg: 'Your password has been updated!' });
     },
