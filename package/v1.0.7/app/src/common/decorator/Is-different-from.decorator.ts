@@ -14,6 +14,10 @@ export function IsDifferentFrom(property: string, validationOptions?: Validation
           const relatedValue = args.object[relatedPropertyName];
           return value !== relatedValue;
         },
+        defaultMessage(args: ValidationArguments) {
+          const [relatedPropertyName] = args.constraints;
+          return `${propertyName} must be different from ${relatedPropertyName}`;
+        },
       },
     });
   };

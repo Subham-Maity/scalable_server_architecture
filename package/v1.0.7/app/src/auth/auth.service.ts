@@ -35,9 +35,21 @@ export class AuthService {
   ) {}
 
   /**Global*/
-  //Use in Singing or If needed
-  checkIfUserDeleted = async (email: string) => {
+  //Use in Singing
+  checkIfUserDeletedByEmail = async (email: string) => {
     const user = await this.prisma.user.findUnique({ where: { email: email } });
+
+    if (!user) {
+      throw new NotFoundException('User not found');
+    }
+    if (user.deleted) {
+      throw new UnauthorizedException('This account has been deleted.');
+    }
+    return user;
+  };
+  //Use in Change Password
+  checkIfUserDeletedByUserId = async (userId: ConfigId) => {
+    const user = await this.prisma.user.findUnique({ where: { id: userId } });
 
     if (!user) {
       throw new NotFoundException('User not found');
@@ -134,7 +146,7 @@ export class AuthService {
   /**SingIn/Login - Local*/
   signinLocal = asyncErrorHandler(async (dto: AuthDto, res: Response): Promise<void> => {
     //find user
-    const user = await this.checkIfUserDeleted(dto.email);
+    const user = await this.checkIfUserDeletedByEmail(dto.email);
 
     //verify password
     const passwordMatches = await PasswordHash.verifyPassword(user.hash, dto.password);
@@ -379,6 +391,49 @@ export class AuthService {
       });
 
       res.status(200).send({ msg: 'Your password has been updated!' });
+    },
+  );
+  /**Change Password*/
+  changePassword = asyncErrorHandler(
+    async (userId: ConfigId, oldPassword: string, newPassword: string) => {
+      const user = await this.checkIfUserDeletedByUserId(userId);
+
+      const oldPasswordMatches = await PasswordHash.verifyPassword(user.hash, oldPassword);
+
+      if (!oldPasswordMatches) {
+        throw new ForbiddenException('Incorrect old password');
+      }
+
+      const currentPasswordMatches = await PasswordHash.verifyPassword(user.hash, newPassword);
+
+      if (currentPasswordMatches) {
+        throw new BadRequestException('New password cannot be the same as the old password');
+      }
+
+      const hashedPassword = await PasswordHash.hashData(newPassword);
+
+      try {
+        await this.prisma.user.update({
+          where: { id: userId },
+          data: { hash: hashedPassword },
+        });
+      } catch (error) {
+        throw new InternalServerErrorException(
+          'Failed to update the password. Please try again later.',
+        );
+      }
+
+      await this.bullService.addJob({
+        type: 'mail',
+        data: {
+          email: user.email,
+          subject: 'Now you changed your password',
+          template: './auth/change-password/change-password',
+          context: {
+            name: user.email,
+          },
+        },
+      });
     },
   );
 

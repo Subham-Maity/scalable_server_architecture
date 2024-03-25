@@ -30,6 +30,7 @@ import {
 import { AuthGuard } from '@nestjs/passport';
 import { RequestWithUser } from './type';
 import { Response } from 'express';
+import { ChangePasswordDto } from './dto/change-password.dto';
 
 @ApiTags('🔐 Authentication')
 @Controller('auth')
@@ -222,6 +223,32 @@ export class AuthController {
   @ApiBody({ type: AuthDto, description: 'The user information' })
   resetPassword(@Body() dto: AuthDto, @Body('token') token: string, @Res() res: Response) {
     return this.authService.resetPassword(dto, token, res);
+  }
+
+  /**
+   * PATCH: http://localhost:3333/auth/change-password
+   * It will change the password of the current user.
+   * {
+   *   "oldPassword": "OldPassword123!",
+   *   "newPassword": "NewPassword456!"
+   * }
+   * @param userId
+   * @param dto
+   */
+  @UseGuards(AuthGuard('jwt'))
+  @Patch('change-password')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Change the password of the current user' })
+  @ApiOkResponse({
+    status: 200,
+    description: 'The password has been successfully changed.',
+    type: 'application/text',
+  })
+  @ApiBadRequestResponse({ status: 400, description: 'Bad Request: Invalid data.' })
+  @ApiUnauthorizedResponse({ status: 401, description: 'Unauthorized: No token provided.' })
+  @ApiBody({ type: ChangePasswordDto, description: 'The user information' })
+  changePassword(@GetCurrentUserId() userId: ConfigId, @Body() dto: ChangePasswordDto) {
+    return this.authService.changePassword(userId, dto.oldPassword, dto.newPassword);
   }
 
   /*-----------------------------*/
