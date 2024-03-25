@@ -49,4 +49,4 @@ More.....
 
 #### 📌 [Version 1.0.6](package/v1.0.6/documentation/README.md) - `focus`: email with nodemailer, 0Auth Gmail, BullMq, DLQ
 
-#### 📌 [Version 1.0.7](package/v1.0.7/documentation/README.md) - `focus`: register user using link 
+#### 📌 [Version 1.0.7](package/v1.0.7/documentation/README.md) - `focus`: register user using link, Change password , User Control 
