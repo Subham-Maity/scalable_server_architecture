@@ -79,6 +79,7 @@ export class AuthController {
    * @param res
    */
   @Public()
+  @HttpCode(HttpStatus.CREATED)
   @Get('verify-account/:token')
   verifyAccount(@Param('token') token: string, @Res() res: Response) {
     return this.authService.activateUser(token, res);

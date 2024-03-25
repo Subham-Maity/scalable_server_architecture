@@ -34,6 +34,20 @@ export class AuthService {
     private bullService: BullService,
   ) {}
 
+  /**Global*/
+  //Use in Singing or If needed
+  checkIfUserDeleted = async (email: string) => {
+    const user = await this.prisma.user.findUnique({ where: { email: email } });
+
+    if (!user) {
+      throw new NotFoundException('User not found');
+    }
+    if (user.deleted) {
+      throw new UnauthorizedException('This account has been deleted.');
+    }
+    return user;
+  };
+
   /**SingUp/Register - Local*/
   // Generates token for the signup verification link
   generateSignupVerificationToken = asyncErrorHandler(async (user: UserData) => {
@@ -120,11 +134,8 @@ export class AuthService {
   /**SingIn/Login - Local*/
   signinLocal = asyncErrorHandler(async (dto: AuthDto, res: Response): Promise<void> => {
     //find user
-    const user = await this.prisma.user.findUnique({
-      where: {
-        email: dto.email,
-      },
-    });
+    const user = await this.checkIfUserDeleted(dto.email);
+
     //verify password
     const passwordMatches = await PasswordHash.verifyPassword(user.hash, dto.password);
 
