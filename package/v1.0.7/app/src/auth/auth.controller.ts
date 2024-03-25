@@ -39,6 +39,15 @@ export class AuthController {
   /*--------------------------*/
   /**���������REGISTER���������*/
   /*_________________________*/
+  /**
+   1. The user enters their email address, password, first name, and last name on the registration page of the application
+   and clicks on the “Sign Up” button. The application sends a POST request to /auth/local/signup with
+   the user’s information in the request body.
+   2. The server generates a verification token and a verification link that includes the token. The link is sent to the user’s email.
+   3. The user clicks on the verification link in their email. The application sends a GET request to /auth/verify-account/:token
+   with the token from the url.
+   4. After the user’s account is activated, the server sends a confirmation email to the user.
+   */
 
   /** POST: http://localhost:3333/auth/local/signin
    "email": "subham@gmail.com",
@@ -65,6 +74,15 @@ export class AuthController {
     return this.authService.signupLocal(dto, res);
   }
 
+  /** GET: http://localhost:3333/auth/verify-account/:token
+   * @param token
+   * @param res
+   */
+  @Public()
+  @Get('verify-account/:token')
+  verifyAccount(@Param('token') token: string, @Res() res: Response) {
+    return this.authService.activateUser(token, res);
+  }
   /*--------------------------*/
   /**���������LOGIN���������*/
   /*_________________________*/
@@ -93,11 +111,6 @@ export class AuthController {
     return this.authService.signinLocal(dto, res);
   }
 
-  @Public()
-  @Get('verify-account/:token')
-  verifyAccount(@Param('token') token: string, @Res() res: Response) {
-    return this.authService.activateUser(token, res);
-  }
   /*--------------------------*/
   /**���������LOGOUT���������*/
   /*_________________________*/
