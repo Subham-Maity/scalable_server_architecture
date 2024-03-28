@@ -8,6 +8,7 @@ import {
   UseGuards,
   HttpCode,
   HttpStatus,
+  Query,
 } from '@nestjs/common';
 import { User } from '@prisma/client';
 import { EditUserDto } from './dto';
@@ -23,6 +24,7 @@ import {
   ApiTags,
   ApiUnauthorizedResponse,
 } from '@nestjs/swagger';
+import { GetAllUsersParams } from './types';
 
 @ApiTags('👤 User')
 @UseGuards(AtGuard)
@@ -34,6 +36,22 @@ export class UserController {
    * GET: http://localhost:3333/users
    * bearer token: {access token}
    * It will return all users' information.
+   *
+   * Query Parameters:
+   * - page (number): The page number for pagination (default: 1)
+   * - limit (number): The number of items per page for pagination (default: 10)
+   * - sortBy (string): The field to sort by (e.g., createdAt, updatedAt, email, firstName, lastName)
+   * - order (string): The order to sort by (asc or desc, default: asc)
+   * - q (string): The search query to filter users by email, firstName, or lastName
+   * - any other field from the User model can be used for filtering
+   *
+   * Example queries:
+   * - Get all users: http://localhost:3333/users
+   * - Get users on page 2 with 20 items per page: http://localhost:3333/users?page=2&limit=20
+   * - Get users sorted by email in descending order: http://localhost:3333/users?sortBy=email&order=desc
+   * - Search for users with email containing 'example': http://localhost:3333/users?q=example
+   * - Filter users by firstName 'John': http://localhost:3333/users?firstName=John
+   * - Combine multiple parameters: http://localhost:3333/users?page=1&limit=10&sortBy=createdAt&order=desc&q=example&firstName=John
    */
   @Get()
   @HttpCode(HttpStatus.OK)
@@ -43,8 +61,8 @@ export class UserController {
     description: "The users' information has been successfully retrieved.",
   })
   @ApiUnauthorizedResponse({ status: 401, description: 'Unauthorized: No token provided.' })
-  getAllUsers() {
-    return this.userService.getAllUsers();
+  getAllUsers(@Query() params: GetAllUsersParams) {
+    return this.userService.getAllUsers(params);
   }
 
   /**

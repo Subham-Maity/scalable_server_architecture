@@ -1,10 +1,11 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { EditUserDto } from './dto';
 import { ConfigId } from '../types';
 import { asyncErrorHandler } from '../errors';
 import { PrismaService } from '../prisma';
+import { Prisma } from '@prisma/client';
+import { GetAllUsersParams } from './types';
 
-@Injectable()
 @Injectable()
 export class UserService {
   editUser = asyncErrorHandler(async (userId: ConfigId, dto: EditUserDto) => {
@@ -35,8 +36,79 @@ export class UserService {
     return user;
   });
 
-  getAllUsers = asyncErrorHandler(async () => {
-    const users = await this.prisma.user.findMany();
+  // Pagination
+  getPaginationParams = (params: GetAllUsersParams) => {
+    const page = params.page ? Number(params.page) : 1;
+    const limit = params.limit ? Number(params.limit) : 10;
+
+    if (isNaN(page) || isNaN(limit)) {
+      throw new BadRequestException('Page and limit must be valid numbers');
+    }
+
+    const skip = (page - 1) * limit;
+    return { skip, take: limit };
+  };
+
+  // Sorting
+  getSortParams = (params: GetAllUsersParams) => {
+    const { sortBy, order } = params;
+    const orderBy: Prisma.UserOrderByWithRelationInput = {};
+    if (sortBy) {
+      orderBy[sortBy as keyof Prisma.UserOrderByWithRelationInput] = order || 'asc';
+    }
+
+    return { orderBy };
+  };
+
+  // Searching
+  getSearchParams = (params: GetAllUsersParams) => {
+    const { q } = params;
+    const where: Prisma.UserWhereInput = {};
+
+    if (q) {
+      where.OR = [
+        { email: { contains: q } },
+        { firstName: { contains: q } },
+        { lastName: { contains: q } },
+      ];
+    }
+
+    return { where };
+  };
+
+  // Filtering
+  getFilterParams = (params: GetAllUsersParams) => {
+    const where: Prisma.UserWhereInput = {};
+
+    Object.entries(params).forEach(([key, value]) => {
+      if (
+        key !== 'q' &&
+        key !== 'sortBy' &&
+        key !== 'order' &&
+        key !== 'page' &&
+        key !== 'limit' &&
+        value !== undefined
+      ) {
+        where[key as keyof Prisma.UserWhereInput] = value as any;
+      }
+    });
+
+    return { where };
+  };
+
+  getAllUsers = asyncErrorHandler(async (params: GetAllUsersParams) => {
+    const { skip, take } = this.getPaginationParams(params);
+    const { orderBy } = this.getSortParams(params);
+    const { where: searchWhere } = this.getSearchParams(params);
+    const { where: filterWhere } = this.getFilterParams(params);
+
+    const users = await this.prisma.user.findMany({
+      skip,
+      take,
+      orderBy,
+      where: { ...searchWhere, ...filterWhere },
+    });
+
     if (!users) {
       throw new NotFoundException('No users found');
     }
