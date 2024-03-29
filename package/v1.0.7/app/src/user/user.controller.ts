@@ -11,7 +11,7 @@ import {
   Query,
 } from '@nestjs/common';
 import { User } from '@prisma/client';
-import { EditUserDto } from './dto';
+import { EditUserDto, GetAllUsersDto } from './dto';
 import { UserService } from './user.service';
 import { AtGuard, CheckDeletedUserGuard } from '../auth/guard';
 import { GetCurrentUser, GetCurrentUserId } from '../auth/decorator';
@@ -24,7 +24,6 @@ import {
   ApiTags,
   ApiUnauthorizedResponse,
 } from '@nestjs/swagger';
-import { GetAllUsersParams } from './types';
 
 @ApiTags('👤 User')
 @UseGuards(AtGuard)
@@ -61,8 +60,8 @@ export class UserController {
     description: "The users' information has been successfully retrieved.",
   })
   @ApiUnauthorizedResponse({ status: 401, description: 'Unauthorized: No token provided.' })
-  getAllUsers(@Query() params: GetAllUsersParams) {
-    return this.userService.getAllUsers(params);
+  getAllUsers(@Query() dto: GetAllUsersDto) {
+    return this.userService.getAllUsers(dto);
   }
 
   /**
