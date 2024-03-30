@@ -9,6 +9,7 @@ import { RtTokenService } from './encrypt';
 import { JwtSignService, JwtVerifyService } from './jwt';
 import { Mail0AuthModule, Mail0AuthService, MailConfig, MailModule, MailService } from '../mail';
 import { BullService, QueueModule } from '../queue/bull';
+import { RedisService } from '../redis';
 
 @Module({
   imports: [JwtModule.register({}), ConfigModule, MailModule, Mail0AuthModule, QueueModule],
@@ -26,6 +27,7 @@ import { BullService, QueueModule } from '../queue/bull';
     Mail0AuthService,
     MailConfig,
     BullService,
+    RedisService,
   ],
 })
 export class AuthModule {}

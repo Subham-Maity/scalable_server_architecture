@@ -1,9 +1,12 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { EditUserDto, GetAllUsersDto } from './dto';
 import { ConfigId } from '../types';
 import { asyncErrorHandler } from '../errors';
 import { PrismaService } from '../prisma';
 import { FilterService, PaginationService, SearchService, SortService } from './query';
+import { users_key_prefix_for_redis } from './constant';
+import { RedisService } from '../redis';
+import { sanitize } from '../utils';
 
 @Injectable()
 export class UserService {
@@ -13,7 +16,9 @@ export class UserService {
     private readonly sortService: SortService,
     private readonly searchService: SearchService,
     private readonly filterService: FilterService,
+    private readonly redisService: RedisService,
   ) {}
+  /**Edit User*/
   editUser = asyncErrorHandler(async (userId: ConfigId, dto: EditUserDto) => {
     const user = await this.prisma.user.findUnique({ where: { id: userId } });
     if (!user) {
@@ -31,18 +36,66 @@ export class UserService {
     return updatedUser;
   });
 
+  /**Get User Id*/
   getUserById = asyncErrorHandler(async (email: string) => {
+    /**Redis Setup */
+    /**____GET_Redis____*/
+    const cacheKey: string = `${users_key_prefix_for_redis}{email}`;
+
+    try {
+      const cachedUser = await this.redisService.get(cacheKey);
+
+      if (cachedUser) {
+        Logger.debug(`fn: getUserById, Cache hit for ${cacheKey}`);
+        return cachedUser;
+      }
+    } catch (error) {
+      Logger.error(`fn: getUserById, Error getting data from Redis for key ${cacheKey}`, error);
+    }
+
+    Logger.error(`fn: getUserById, Cache miss`);
+    /**----End----*/
+
     const user = await this.prisma.user.findUnique({ where: { email: email } });
+
     if (!user) {
       throw new NotFoundException('User not found');
     }
 
-    delete user.refreshTokenHash;
-    delete user.hash;
-    return user;
+    //Sanitize the user refreshTokenHash and Hash using sanitizer
+    const sanitizedUser = sanitize(user, ['refreshTokenHash', 'hash']);
+
+    /**____SET_Redis____*/
+    try {
+      await this.redisService.set(cacheKey, sanitizedUser, 120);
+    } catch (error) {
+      Logger.error('fn: getUserById, Error setting data to Redis', error);
+    }
+    /**----End----*/
+
+    return sanitizedUser;
   });
 
+  /**Get All Users*/
   getAllUsers = asyncErrorHandler(async (dto: GetAllUsersDto) => {
+    /**Redis Setup */
+    /**____GET_Redis____*/
+    const cacheKey: string = `${users_key_prefix_for_redis}${JSON.stringify(dto)}`;
+
+    try {
+      const cachedUsers = await this.redisService.get(cacheKey);
+
+      if (cachedUsers) {
+        Logger.debug(`fn: getAllUsers, Cache hit for ${cacheKey}`);
+        return cachedUsers;
+      }
+    } catch (error) {
+      Logger.error(`fn: getAllUsers, Error getting data from Redis for key ${cacheKey}`, error);
+    }
+
+    Logger.error(`fn: getAllUsers, Cache miss`);
+    /**----End----*/
+
     const { skip, take } = this.paginationService.getPaginationParams(dto);
     const { orderBy } = this.sortService.getSortParams(dto);
     const { where: searchWhere } = this.searchService.getSearchParams(dto);
@@ -59,14 +112,21 @@ export class UserService {
       throw new NotFoundException('No users found');
     }
 
-    users.forEach((user) => {
-      delete user.refreshTokenHash;
-      delete user.hash;
-    });
+    //Sanitize the users refreshTokenHash and Hash using sanitizer
+    const sanitizedUsers = users.map((user) => sanitize(user, ['refreshTokenHash', 'hash']));
 
-    return users;
+    /**____SET_Redis____*/
+    try {
+      await this.redisService.set(cacheKey, sanitizedUsers, 30);
+    } catch (error) {
+      Logger.error('fn: getAllUsers, Error setting data to Redis', error);
+    }
+    /**----End----*/
+
+    return sanitizedUsers;
   });
 
+  /**Delete A User*/
   userDelete = asyncErrorHandler(async (userId: ConfigId) => {
     const user = await this.prisma.user.findUnique({ where: { id: userId } });
     if (!user) {
@@ -79,6 +139,7 @@ export class UserService {
     });
   });
 
+  /**Return That Deleted User*/
   userBack = asyncErrorHandler(async (userId: ConfigId) => {
     const user = await this.prisma.user.findUnique({ where: { id: userId } });
 
@@ -96,6 +157,7 @@ export class UserService {
     return updatedUser;
   });
 
+  /**Danger User Delete*/
   dangerUserDelete = asyncErrorHandler(async (userId: ConfigId) => {
     const user = await this.prisma.user.findUnique({ where: { id: userId } });
     if (!user) {

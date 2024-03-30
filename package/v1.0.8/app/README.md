@@ -3,6 +3,7 @@
 
 - If you want to migrate `npx prisma migrate dev`
 - For mongodb use `npx prisma db push`
+- Test: yarn test
 
 ```bash
 npx prisma studio

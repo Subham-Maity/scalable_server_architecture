@@ -19,6 +19,8 @@ import { generateOTP, OTPConfig } from './otp';
 import { JwtSignService, JwtVerifyService } from './jwt';
 import { PrismaService } from '../prisma';
 import { BullService } from '../queue/bull';
+import { RedisService } from '../redis';
+import { auth_otp_key_prefix_for_redis } from './constant';
 
 @Injectable()
 export class AuthService {
@@ -32,6 +34,7 @@ export class AuthService {
     private jwtSignService: JwtSignService,
     private jwtVerifyService: JwtVerifyService,
     private bullService: BullService,
+    private readonly otpService: RedisService,
   ) {}
 
   /**Global*/
@@ -84,7 +87,6 @@ export class AuthService {
   });
 
   //TODO: Rate limit on IP address
-  // If user not exists it will send the link to the user's email
   signupLocal = asyncErrorHandler(async (dto: AuthDto): Promise<void> => {
     const hash = await PasswordHash.hashData(dto.password);
     const user = {
@@ -232,9 +234,7 @@ export class AuthService {
   );
 
   /**Reset Password*/
-  //TODO: Redis Store the OTP
   //TODO: RATE LIMIT Based on Email or IP
-  // Generate a token for the password reset request
   generateResetPasswordRequestToken = asyncErrorHandler(
     async (user: UserData, JWT_SECRET: string, JWT_EXPIRES_IN: string) => {
       const payload = { email: user.email, id: user.id };
@@ -266,6 +266,10 @@ export class AuthService {
       specialChars: false,
     };
     this.OTP = generateOTP(config_otp);
+    const expirationInSeconds = 300;
+    const key = `${auth_otp_key_prefix_for_redis}${user.email}`;
+    const value = this.OTP;
+    await this.otpService.set(key, value, expirationInSeconds);
     const pass_reset_link = `${FrontendUrl}/auth/reset-password/${user.id}/${verificationToken}`;
     return { code: this.OTP, link: `${pass_reset_link}` };
   });
@@ -306,8 +310,9 @@ export class AuthService {
         throw new NotFoundException('User not found');
       }
       const email: string = user.email;
-      if (this.OTP === code) {
-        this.OTP = null;
+      const storedOtp = await this.otpService.get(`${auth_otp_key_prefix_for_redis}${email}`);
+      if (storedOtp === code) {
+        await this.otpService.del(`${auth_otp_key_prefix_for_redis}${email}`);
         this.resetSession = true;
       } else {
         throw new ForbiddenException('Invalid OTP');

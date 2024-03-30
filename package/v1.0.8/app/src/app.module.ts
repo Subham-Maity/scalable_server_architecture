@@ -9,6 +9,7 @@ import { LoggerMiddleware } from './utils';
 import { PrismaModule } from './prisma';
 import { BullService, QueueModule } from './queue/bull';
 import { validateConfig } from './validation/config.joi';
+import { RedisModule } from './redis/redis.module';
 
 @Module({
   imports: [
@@ -17,10 +18,12 @@ import { validateConfig } from './validation/config.joi';
       load: [configuration],
       validationSchema: validateConfig,
     }),
+
     AuthModule,
     UserModule,
     PrismaModule,
     QueueModule,
+    RedisModule,
   ],
   //purpose: add AtGuard to the global guard list
   providers: [

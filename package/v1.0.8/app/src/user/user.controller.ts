@@ -111,7 +111,7 @@ export class UserController {
   /**
    * PATCH: http://localhost:3333/users/:id/delete
    * bearer token: {access token}
-   * It will soft delete a user by an admin.
+   * It will softly delete a user by an admin.
    * @param userId
    */
   @Patch(':id/delete')
