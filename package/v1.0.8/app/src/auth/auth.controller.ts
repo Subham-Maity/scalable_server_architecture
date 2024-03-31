@@ -31,6 +31,7 @@ import { AuthGuard } from '@nestjs/passport';
 import { RequestWithUser } from './type';
 import { Response } from 'express';
 import { ChangePasswordDto } from './dto/change-password.dto';
+import { SkipThrottle, Throttle } from '@nestjs/throttler';
 
 @ApiTags('🔐 Authentication')
 @Controller('auth')
@@ -59,6 +60,7 @@ export class AuthController {
    * @param dto
    * @param res
    */
+  @Throttle({ default: { limit: 1, ttl: 120000 } })
   @Public()
   @Post('/local/signup')
   @HttpCode(HttpStatus.CREATED)
@@ -79,6 +81,7 @@ export class AuthController {
    * @param token
    * @param res
    */
+  @Throttle({ default: { limit: 3, ttl: 60000 } })
   @Public()
   @HttpCode(HttpStatus.CREATED)
   @Get('verify-account/:token')
@@ -96,6 +99,7 @@ export class AuthController {
    * @param dto
    * @param res
    */
+  @Throttle({ default: { limit: 8, ttl: 120000 } })
   @Public()
   @UseGuards(CheckUserExistsGuard)
   @Post('/local/signin')
@@ -124,6 +128,7 @@ export class AuthController {
    * @param userId
    * @param res
    */
+  @SkipThrottle()
   @Post('/local/signout')
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Sign out the current user' })
@@ -173,6 +178,7 @@ export class AuthController {
    * It will generate a password reset link for the user also send an OTP to the user.
    * @param email
    */
+  @Throttle({ default: { limit: 1, ttl: 120000 } })
   @Public()
   @UseGuards(CheckUserExistsGuard)
   @Post('forgot-password')
@@ -193,6 +199,7 @@ export class AuthController {
    * @param token
    * @param res
    */
+  @Throttle({ default: { limit: 3, ttl: 60000 } })
   @Public()
   @Post('verify-otp')
   @HttpCode(HttpStatus.OK)
@@ -210,6 +217,7 @@ export class AuthController {
    * @param token
    * @param res
    */
+  @Throttle({ default: { limit: 3, ttl: 60000 } })
   @Public()
   @Patch('reset-password')
   @HttpCode(HttpStatus.CREATED)
@@ -235,6 +243,7 @@ export class AuthController {
    * @param userId
    * @param dto
    */
+  @Throttle({ default: { limit: 3, ttl: 60000 } })
   @UseGuards(AuthGuard('jwt'))
   @Patch('change-password')
   @HttpCode(HttpStatus.OK)
@@ -266,6 +275,7 @@ export class AuthController {
   //if we don't use public decorator,
   //then it will ask for AtGuard instead of RtGuard
   //Purpose: @Public() here - bypass the access token check
+  @Throttle({ default: { limit: 2, ttl: 10000 } })
   @Public()
   @UseGuards(RtGuard)
   @Post('refresh')
@@ -296,6 +306,7 @@ export class AuthController {
    * It will return a new access token and refresh token.
    * @param req
    */
+  @SkipThrottle()
   @UseGuards(AuthGuard('jwt'))
   @Get('check')
   @HttpCode(HttpStatus.OK)

@@ -24,6 +24,7 @@ import {
   ApiTags,
   ApiUnauthorizedResponse,
 } from '@nestjs/swagger';
+import { Throttle } from '@nestjs/throttler';
 
 @ApiTags('👤 User')
 @UseGuards(AtGuard)
@@ -52,6 +53,7 @@ export class UserController {
    * - Filter users by firstName 'John': http://localhost:3333/users?firstName=John
    * - Combine multiple parameters: http://localhost:3333/users?page=1&limit=10&sortBy=createdAt&order=desc&q=example&firstName=John
    */
+  @Throttle({ default: { limit: 20, ttl: 60000 } })
   @Get()
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Get all users' })
@@ -70,6 +72,7 @@ export class UserController {
    * It will return the current user's information.
    * @param user
    */
+  @Throttle({ default: { limit: 20, ttl: 60000 } })
   @Get('me')
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: "Get the current user's information" })
@@ -90,6 +93,7 @@ export class UserController {
    * @param userId
    * @param dto
    */
+  @Throttle({ default: { limit: 20, ttl: 60000 } })
   @Patch()
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: "Update the current user's information" })
@@ -114,6 +118,7 @@ export class UserController {
    * It will softly delete a user by an admin.
    * @param userId
    */
+  @Throttle({ default: { limit: 20, ttl: 60000 } })
   @Patch(':id/delete')
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Soft delete a user by an admin' })
@@ -131,6 +136,7 @@ export class UserController {
    * It will restore a user by an admin.
    * @param userId
    */
+  @Throttle({ default: { limit: 20, ttl: 60000 } })
   @Patch(':id/restore')
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Restore a user by an admin' })
@@ -148,6 +154,7 @@ export class UserController {
    * It will hard delete a user by a super admin.
    * @param userId
    */
+  @Throttle({ default: { limit: 20, ttl: 60000 } })
   @Delete(':id/danger-delete')
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Hard delete a user by a super admin' })

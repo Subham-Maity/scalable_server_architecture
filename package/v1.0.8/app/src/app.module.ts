@@ -9,7 +9,7 @@ import { LoggerMiddleware } from './utils';
 import { PrismaModule } from './prisma';
 import { BullService, QueueModule } from './queue/bull';
 import { validateConfig } from './validation/config.joi';
-import { RedisModule } from './redis/redis.module';
+import { RedisModule } from './redis';
 
 @Module({
   imports: [

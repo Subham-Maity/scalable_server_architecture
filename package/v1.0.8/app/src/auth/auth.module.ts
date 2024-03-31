@@ -10,11 +10,29 @@ import { JwtSignService, JwtVerifyService } from './jwt';
 import { Mail0AuthModule, Mail0AuthService, MailConfig, MailModule, MailService } from '../mail';
 import { BullService, QueueModule } from '../queue/bull';
 import { RedisService } from '../redis';
+import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
+import { APP_GUARD } from '@nestjs/core';
 
 @Module({
-  imports: [JwtModule.register({}), ConfigModule, MailModule, Mail0AuthModule, QueueModule],
+  imports: [
+    ThrottlerModule.forRoot([
+      {
+        ttl: 3000,
+        limit: 3,
+      },
+    ]),
+    JwtModule.register({}),
+    ConfigModule,
+    MailModule,
+    Mail0AuthModule,
+    QueueModule,
+  ],
   controllers: [AuthController],
   providers: [
+    {
+      provide: APP_GUARD,
+      useClass: ThrottlerGuard,
+    },
     AuthService,
     JwtService,
     AtStrategy,
