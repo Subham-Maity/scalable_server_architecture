@@ -15,9 +15,9 @@ export class RedisService {
     }
   }
 
-  async set(key: string, value: any, ttlInSeconds?: number): Promise<void> {
+  async set(key: string, value: any, ttlInSeconds: number = 3600): Promise<void> {
     try {
-      const ttlInMilliseconds = ttlInSeconds ? ttlInSeconds * 1000 : undefined;
+      const ttlInMilliseconds = ttlInSeconds * 1000;
       await this.cacheManager.set(key, value, ttlInMilliseconds);
     } catch (error) {
       Logger.error(`Error setting key ${key} to Redis`, error);
