@@ -46,15 +46,13 @@ import {
   ApiQuery,
   ApiTags,
   ApiUnauthorizedResponse,
+  ApiInternalServerErrorResponse,
+  ApiTooManyRequestsResponse,
 } from '@nestjs/swagger';
 import { AuthGuard } from '@nestjs/passport';
 import { blackListActionType } from './type';
 import { Response } from 'express';
 import { SkipThrottle, Throttle } from '@nestjs/throttler';
-import {
-  ApiInternalServerErrorResponse,
-  ApiTooManyRequestsResponse,
-} from '@nestjs/swagger/dist/decorators/api-response.decorator';
 
 @ApiTags('🔐 Authentication')
 @Controller('auth')
