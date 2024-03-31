@@ -161,9 +161,6 @@ export class AuthService {
     // Set tokens in cookies
     setCookie(res, 'access_token', tokens.access_token, cookieOptionsAt);
     setCookie(res, 'refresh_token', tokens.refresh_token, cookieOptionsRt);
-
-    // End the response
-    res.end();
   });
 
   /**Logout Local*/
@@ -187,9 +184,6 @@ export class AuthService {
     // Clear the cookies
     clearCookie(res, 'access_token');
     clearCookie(res, 'refresh_token');
-
-    // End the response
-    res.end();
   });
 
   /**Refresh Token*/
@@ -226,9 +220,6 @@ export class AuthService {
       // Set tokens in cookies
       setCookie(res, 'access_token', tokens.access_token, cookieOptionsAt);
       setCookie(res, 'refresh_token', tokens.refresh_token, cookieOptionsRt);
-
-      // End the response
-      res.end();
     },
   );
 
@@ -326,29 +317,37 @@ export class AuthService {
   //Purpose: Verify the otp and token
   verifyOTP = asyncErrorHandler(
     async (code: string, token: string, res: Response): Promise<void> => {
-      const payload = await this.validateToken(token);
-      const user = await this.prisma.user.findUnique({
-        where: {
-          email: payload.email,
-          id: payload.id,
-        },
-      });
-      if (!user) {
-        throw new NotFoundException('User not found');
+      let email: string = '';
+      try {
+        const payload = await this.validateToken(token);
+        const user = await this.prisma.user.findUnique({
+          where: {
+            email: payload.email,
+            id: payload.id,
+          },
+        });
+        if (!user) {
+          throw new NotFoundException('User not found');
+        }
+        email = user.email; // Now assign the actual value to email
+        const storedOtp = await this.otpService.get(`${auth_otp_key_prefix_for_redis}${email}`);
+        if (storedOtp === code) {
+          this.resetSession = true;
+        } else {
+          throw new ForbiddenException('Invalid OTP');
+        }
+        res.status(201).json({
+          message: 'OTP verified successfully!',
+          email,
+          token,
+        });
+      } catch (error) {
+        // If an error occurs, delete the OTP
+        if (email) {
+          await this.otpService.del(`${auth_otp_key_prefix_for_redis}${email}`);
+        }
+        throw error;
       }
-      const email: string = user.email;
-      const storedOtp = await this.otpService.get(`${auth_otp_key_prefix_for_redis}${email}`);
-      if (storedOtp === code) {
-        await this.otpService.del(`${auth_otp_key_prefix_for_redis}${email}`);
-        this.resetSession = true;
-      } else {
-        throw new ForbiddenException('Invalid OTP');
-      }
-      res.status(201).json({
-        message: 'OTP verified successfully!',
-        email,
-        token,
-      });
     },
   );
 
@@ -375,14 +374,14 @@ export class AuthService {
 
   //Purpose: reset password
   resetPassword = asyncErrorHandler(
-    async (dto: AuthDto, token: string, res: Response): Promise<void> => {
+    async (email: string, password: string, token: string, res: Response): Promise<void> => {
       if (!this.resetSession) {
         throw new ForbiddenException('Session expired!');
       }
 
       const payload = await this.validateToken(token);
 
-      if (payload.email !== dto.email) {
+      if (payload.email !== email) {
         throw new ForbiddenException('Invalid token');
       }
 
@@ -397,7 +396,7 @@ export class AuthService {
         throw new NotFoundException('User not found');
       }
 
-      const hashedPassword = await PasswordHash.hashData(dto.password);
+      const hashedPassword = await PasswordHash.hashData(password);
 
       await this.prisma.user.update({
         where: {

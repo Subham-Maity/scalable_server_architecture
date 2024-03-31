@@ -1,10 +1,14 @@
 import {
   BadRequestException,
   Body,
+  ConflictException,
   Controller,
+  ForbiddenException,
   Get,
   HttpCode,
   HttpStatus,
+  InternalServerErrorException,
+  NotFoundException,
   Param,
   Patch,
   Post,
@@ -12,10 +16,22 @@ import {
   Req,
   Request,
   Res,
+  UnauthorizedException,
   UseGuards,
 } from '@nestjs/common';
 import { AuthService } from './auth.service';
-import { AuthDto } from './dto';
+import {
+  AuthDto,
+  BlacklistRefreshTokensDto,
+  ChangePasswordDto,
+  ForgetPasswordDto,
+  LogoutDto,
+  RequestTypeDto,
+  RequestWithUserDto,
+  ResetPasswordDto,
+  VerifyAccountDto,
+  VerifyOtpDto,
+} from './dto';
 import { CheckUniqueEmailGuard, CheckUserExistsGuard, RtGuard } from './guard';
 import { GetCurrentUserId } from './decorator';
 import { Public } from '../common';
@@ -24,17 +40,21 @@ import {
   ApiBadRequestResponse,
   ApiBody,
   ApiCreatedResponse,
+  ApiForbiddenResponse,
   ApiOkResponse,
   ApiOperation,
+  ApiQuery,
   ApiTags,
   ApiUnauthorizedResponse,
 } from '@nestjs/swagger';
 import { AuthGuard } from '@nestjs/passport';
-import { blackListActionType, RequestWithUser } from './type';
+import { blackListActionType } from './type';
 import { Response } from 'express';
-import { ChangePasswordDto } from './dto/change-password.dto';
 import { SkipThrottle, Throttle } from '@nestjs/throttler';
-import { BlacklistRefreshTokensDto } from './dto/blacklist-refresh-token.dto';
+import {
+  ApiInternalServerErrorResponse,
+  ApiTooManyRequestsResponse,
+} from '@nestjs/swagger/dist/decorators/api-response.decorator';
 
 @ApiTags('🔐 Authentication')
 @Controller('auth')
@@ -55,69 +75,174 @@ export class AuthController {
    */
 
   /** POST: http://localhost:3333/auth/local/signin
-   "email": "subham@gmail.com",
-   "password": "Codexam@123",
-   "firstName": "Subham",
-   "lastName": "Maity",
-   }
+       {
+       "email": "subham@gmail.com",
+       "password": "Codexam@123",
+       }
    * @param dto
-   * @param res
    */
-  @Throttle({ default: { limit: 1, ttl: 120000 } })
   @Public()
+  @Throttle({ default: { limit: 2, ttl: 120000 } })
   @Post('/local/signup')
   @HttpCode(HttpStatus.CREATED)
   @ApiOperation({ summary: 'Sign up a new user' })
+  @ApiBody({ type: AuthDto, description: 'The user information' })
   @ApiCreatedResponse({
     status: 201,
     description: 'The user has been successfully created.',
-    type: 'application/text',
   })
-  @ApiBadRequestResponse({ status: 400, description: 'Bad Request: Invalid data.' })
-  @ApiBody({ type: AuthDto, description: 'The user information' })
+  @ApiBadRequestResponse({
+    status: 400,
+    description: 'Bad Request - Invalid data.',
+    type: Error,
+  })
+  @ApiTooManyRequestsResponse({
+    status: 429,
+    description: 'ThrottlerException: Too Many Requests',
+    type: Error,
+  })
+  @ApiInternalServerErrorResponse({
+    status: 500,
+    description: 'INTERNAL_SERVER_ERROR.',
+    type: Error,
+  })
   @UseGuards(CheckUniqueEmailGuard)
-  signupLocal(@Body() dto: AuthDto, @Res({ passthrough: true }) res: Response): Promise<void> {
-    return this.authService.signupLocal(dto, res);
+  async signupLocal(@Body() dto: AuthDto): Promise<{ message: string }> {
+    if (!dto.email || !dto.password) {
+      throw new BadRequestException('Invalid data.');
+    }
+    try {
+      await this.authService.signupLocal(dto);
+      return {
+        message: `User ${dto.email} created successfully`,
+      };
+    } catch (error) {
+      if (error instanceof BadRequestException || error instanceof ConflictException) {
+        throw error;
+      } else {
+        throw new InternalServerErrorException('An error occurred while creating the user.');
+      }
+    }
   }
 
   /** GET: http://localhost:3333/auth/verify-account/:token
+
+   http://localhost:3333/auth/verify-account/eyJlbWFpbCI6InVzZWx...
+
    * @param token
    * @param res
    */
-  @Throttle({ default: { limit: 3, ttl: 60000 } })
   @Public()
-  @HttpCode(HttpStatus.CREATED)
+  @Throttle({ default: { limit: 10, ttl: 60000 } })
   @Get('verify-account/:token')
-  verifyAccount(@Param('token') token: string, @Res() res: Response) {
-    return this.authService.activateUser(token, res);
+  @HttpCode(HttpStatus.CREATED)
+  @ApiOperation({ summary: 'Verify account and create a new account' })
+  @ApiCreatedResponse({
+    status: 201,
+    description: 'The user has been successfully created.',
+  })
+  @ApiBadRequestResponse({
+    status: 400,
+    description: 'Bad Request - Invalid data.',
+    type: Error,
+  })
+  @ApiTooManyRequestsResponse({
+    status: 429,
+    description: 'ThrottlerException: Too Many Requests',
+    type: Error,
+  })
+  @ApiInternalServerErrorResponse({
+    status: 500,
+    description: 'INTERNAL_SERVER_ERROR.',
+    type: Error,
+  })
+  @ApiBadRequestResponse({ status: 401, description: 'Unauthorized request for verification .' })
+  async verifyAccount(
+    @Param('token') token: VerifyAccountDto,
+    @Res() res: Response,
+  ): Promise<{ message: string }> {
+    if (!token) {
+      throw new BadRequestException('The token is required for verification purposes.');
+    }
+    try {
+      await this.authService.activateUser(token, res);
+      return {
+        message: 'Account activated successfully',
+      };
+    } catch (error) {
+      if (error instanceof BadRequestException || error instanceof NotFoundException) {
+        throw error;
+      } else {
+        throw new InternalServerErrorException(
+          'An error occurred while verifying the user account.',
+        );
+      }
+    }
   }
   /*--------------------------*/
   /**���������LOGIN���������*/
   /*_________________________*/
 
   /** POST: http://localhost:3333/auth/local/signin
+   {
    "email": "subham@gmail.com",
    "password": "Codexam@123",
    }
    * @param dto
    * @param res
    */
-  @Throttle({ default: { limit: 8, ttl: 120000 } })
   @Public()
-  @UseGuards(CheckUserExistsGuard)
+  @Throttle({ default: { limit: 8, ttl: 120000 } })
   @Post('/local/signin')
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Sign in an existing user' })
-  @ApiOkResponse({
-    status: 200,
-    description: 'The user has been successfully signed in.',
-    type: 'application/text',
-  })
-  @ApiBadRequestResponse({ status: 400, description: 'Bad Request: Invalid data.' })
-  @ApiUnauthorizedResponse({ status: 403, description: 'Unauthorized: Password does not match.' })
   @ApiBody({ type: AuthDto, description: 'The user credentials' })
-  signinLocal(@Body() dto: AuthDto, @Res({ passthrough: true }) res: Response): Promise<void> {
-    return this.authService.signinLocal(dto, res);
+  @ApiCreatedResponse({
+    status: 201,
+    description: 'The user has been successfully created.',
+  })
+  @ApiBadRequestResponse({
+    status: 400,
+    description: 'Bad Request - Invalid data.',
+    type: Error,
+  })
+  @ApiUnauthorizedResponse({
+    status: 403,
+    description: 'Unauthorized: Password does not match.',
+    type: Error,
+  })
+  @ApiTooManyRequestsResponse({
+    status: 429,
+    description: 'ThrottlerException: Too Many Requests',
+    type: Error,
+  })
+  @ApiInternalServerErrorResponse({
+    status: 500,
+    description: 'INTERNAL_SERVER_ERROR.',
+    type: Error,
+  })
+  @UseGuards(CheckUserExistsGuard)
+  async signinLocal(
+    @Body() dto: AuthDto,
+    @Res({ passthrough: true }) res: Response,
+  ): Promise<{ message: string }> {
+    if (!dto.email || !dto.password) {
+      throw new BadRequestException('Invalid data.');
+    }
+    try {
+      await this.authService.signinLocal(dto, res);
+      return { message: `${dto.email} login successful` };
+    } catch (error) {
+      if (
+        error instanceof BadRequestException ||
+        error instanceof UnauthorizedException ||
+        error instanceof ForbiddenException
+      ) {
+        throw error;
+      } else {
+        throw new InternalServerErrorException('An error occurred while signing in the user.');
+      }
+    }
   }
 
   /*--------------------------*/
@@ -140,11 +265,28 @@ export class AuthController {
     description: 'The user has been successfully signed out.',
   })
   @ApiUnauthorizedResponse({ status: 401, description: 'Unauthorized: No token provided.' })
-  logout(
-    @GetCurrentUserId() userId: ConfigId,
+  @ApiInternalServerErrorResponse({
+    status: 500,
+    description: 'INTERNAL_SERVER_ERROR.',
+    type: Error,
+  })
+  async logout(
+    @GetCurrentUserId() userId: LogoutDto,
     @Res({ passthrough: true }) res: Response,
-  ): Promise<void> {
-    return this.authService.signoutLocal(userId, res);
+  ): Promise<{ message: string }> {
+    try {
+      if (!userId) {
+        throw new BadRequestException('Invalid user ID.');
+      }
+      await this.authService.signoutLocal(userId, res);
+      return { message: 'User signed out successfully' };
+    } catch (error) {
+      if (error instanceof BadRequestException) {
+        throw error;
+      } else {
+        throw new InternalServerErrorException('An error occurred while signing out the user.');
+      }
+    }
   }
 
   /*-----------------------------------*/
@@ -179,72 +321,163 @@ export class AuthController {
   /**
    * POST: http://localhost:3333/auth/forgot-password
    * It will generate a password reset link for the user also send an OTP to the user.
-   * @param email
+   *
+       {
+       "email": "subham@gmail.com",
+       }
+   *
+   * @param dto - The email of the user
    */
-  @Throttle({ default: { limit: 1, ttl: 120000 } })
+
   @Public()
-  @UseGuards(CheckUserExistsGuard)
+  @SkipThrottle()
+  // @Throttle({ default: { limit: 2, ttl: 300000 } })
   @Post('forgot-password')
   @ApiOperation({ summary: 'Request password reset' })
   @ApiCreatedResponse({
     status: 200,
     description: 'Password reset link has been sent.',
-    type: 'application/text',
   })
-  @ApiBadRequestResponse({ status: 400, description: 'Bad Request: Invalid email.' })
-  forgotPassword(@Body('email') email: string) {
-    return this.authService.resetPasswordRequest(email);
+  @ApiBadRequestResponse({
+    status: 400,
+    description: 'Bad Request: Invalid email.',
+    type: Error,
+  })
+  @ApiInternalServerErrorResponse({
+    status: 500,
+    description: 'INTERNAL_SERVER_ERROR.',
+    type: Error,
+  })
+  @UseGuards(CheckUserExistsGuard)
+  async forgotPassword(@Body() dto: ForgetPasswordDto): Promise<{ message: string }> {
+    try {
+      if (!dto.email) {
+        throw new BadRequestException('Email is required.');
+      }
+      await this.authService.resetPasswordRequest(dto.email);
+      return { message: 'Password reset link has been sent' };
+    } catch (error) {
+      if (error instanceof BadRequestException || error instanceof NotFoundException) {
+        throw error;
+      } else {
+        throw new InternalServerErrorException(
+          'An error occurred while requesting password reset.',
+        );
+      }
+    }
   }
   /**
    * POST: http://localhost:3333/auth/verify-otp
    * It will verify the OTP.
-   * @param code
-   * @param token
+   {
+   "code": "335626",
+   "token": "eyJhbGci…"
+   }
+   *
+   * @param dto
    * @param res
    */
-  @Throttle({ default: { limit: 3, ttl: 60000 } })
   @Public()
+  @SkipThrottle()
+  // @Throttle({ default: { limit: 5, ttl: 60000 } })
   @Post('verify-otp')
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Verify OTP' })
   @ApiOkResponse({ status: 200, description: 'The OTP has been successfully verified.' })
   @ApiBadRequestResponse({ status: 400, description: 'Bad Request: Invalid data.' })
-  verifyOTP(@Body('code') code: string, @Body('token') token: string, @Res() res: Response) {
-    return this.authService.verifyOTP(code, token, res);
+  @ApiUnauthorizedResponse({ status: 401, description: 'Unauthorized.', type: Error })
+  @ApiForbiddenResponse({ status: 403, description: 'Forbidden: Session expired.', type: Error })
+  @ApiTooManyRequestsResponse({
+    status: 429,
+    description: 'ThrottlerException: Too Many Requests',
+    type: Error,
+  })
+  @ApiInternalServerErrorResponse({
+    status: 500,
+    description: 'INTERNAL_SERVER_ERROR.',
+    type: Error,
+  })
+  async verifyOTP(@Body() dto: VerifyOtpDto, @Res() res: Response): Promise<{ message: string }> {
+    try {
+      await this.authService.verifyOTP(dto.code, dto.token, res);
+      return { message: 'OTP verified successfully' };
+    } catch (error) {
+      if (error instanceof BadRequestException || error instanceof NotFoundException) {
+        throw error;
+      } else {
+        throw error;
+      }
+    }
   }
 
   /**
    * PATCH: http://localhost:3333/auth/reset-password
    * It will reset the password of the user.
+   {
+   "email": "user@example.com",
+   "password": "NewPassword123!",
+   "token": "eyJhbGci..."
+   }
    * @param dto
-   * @param token
    * @param res
    */
-  @Throttle({ default: { limit: 3, ttl: 60000 } })
+
   @Public()
+  @Throttle({ default: { limit: 10, ttl: 60000 } })
   @Patch('reset-password')
   @HttpCode(HttpStatus.CREATED)
   @ApiOperation({ summary: 'Reset the password of the user' })
   @ApiCreatedResponse({
     status: 201,
     description: 'The password has been successfully reset.',
-    type: 'application/text',
   })
-  @ApiBadRequestResponse({ status: 400, description: 'Bad Request: Invalid data.' })
-  @ApiBody({ type: AuthDto, description: 'The user information' })
-  resetPassword(@Body() dto: AuthDto, @Body('token') token: string, @Res() res: Response) {
-    return this.authService.resetPassword(dto, token, res);
+  @ApiBadRequestResponse({ status: 400, description: 'Bad Request: Invalid data.', type: Error })
+  @ApiUnauthorizedResponse({ status: 401, description: 'Unauthorized.', type: Error })
+  @ApiForbiddenResponse({ status: 403, description: 'Forbidden: Session expired.', type: Error })
+  @ApiTooManyRequestsResponse({
+    status: 429,
+    description: 'ThrottlerException: Too Many Requests',
+    type: Error,
+  })
+  @ApiInternalServerErrorResponse({
+    status: 500,
+    description: 'INTERNAL_SERVER_ERROR.',
+    type: Error,
+  })
+  @ApiBody({ type: ResetPasswordDto, description: 'The reset password information' })
+  async resetPassword(
+    @Body() dto: ResetPasswordDto,
+    @Res() res: Response,
+  ): Promise<{ message: string }> {
+    if (!dto.email || !dto.password || !dto.token) {
+      throw new BadRequestException('Email, password, and token are required.');
+    }
+    try {
+      await this.authService.resetPassword(dto.email, dto.password, dto.token, res);
+      return { message: 'Password reset successfully' };
+    } catch (error) {
+      if (error instanceof BadRequestException || error instanceof NotFoundException) {
+        throw error;
+      } else {
+        throw error;
+      }
+    }
   }
 
   /**
    * PATCH: http://localhost:3333/auth/change-password
    * It will change the password of the current user.
-   * {
-   *   "oldPassword": "OldPassword123!",
-   *   "newPassword": "NewPassword456!"
-   * }
-   * @param userId
-   * @param dto
+   *
+   * Request:
+   *  Headers:
+   *    Authorization: Bearer {access_token}
+   {
+   "oldPassword": "Password565@44",
+   "newPassword": "NewPassword123!"
+   }
+   *
+   * @param userId - The ID of the current user
+   * @param dto - The change password information (old and new password)
    */
   @Throttle({ default: { limit: 3, ttl: 60000 } })
   @UseGuards(AuthGuard('jwt'))
@@ -254,13 +487,34 @@ export class AuthController {
   @ApiOkResponse({
     status: 200,
     description: 'The password has been successfully changed.',
-    type: 'application/text',
   })
   @ApiBadRequestResponse({ status: 400, description: 'Bad Request: Invalid data.' })
   @ApiUnauthorizedResponse({ status: 401, description: 'Unauthorized: No token provided.' })
+  @ApiInternalServerErrorResponse({
+    status: 500,
+    description: 'INTERNAL_SERVER_ERROR.',
+    type: Error,
+  })
   @ApiBody({ type: ChangePasswordDto, description: 'The user information' })
-  changePassword(@GetCurrentUserId() userId: ConfigId, @Body() dto: ChangePasswordDto) {
-    return this.authService.changePassword(userId, dto.oldPassword, dto.newPassword);
+  async changePassword(
+    @GetCurrentUserId() userId: ConfigId,
+    @Body() dto: ChangePasswordDto,
+  ): Promise<{ message: string }> {
+    try {
+      if (!userId || !dto.oldPassword || !dto.newPassword) {
+        throw new BadRequestException('User ID, old password, and new password are required.');
+      }
+      await this.authService.changePassword(userId, dto.oldPassword, dto.newPassword);
+      return { message: 'Password changed successfully' };
+    } catch (error) {
+      if (
+        error instanceof BadRequestException ||
+        error instanceof UnauthorizedException ||
+        error instanceof ForbiddenException
+      ) {
+        throw error;
+      } else throw error;
+    }
   }
 
   /*-----------------------------*/
@@ -278,7 +532,7 @@ export class AuthController {
   //if we don't use public decorator,
   //then it will ask for AtGuard instead of RtGuard
   //Purpose: @Public() here - bypass the access token check
-  @Throttle({ default: { limit: 2, ttl: 10000 } })
+  @Throttle({ default: { limit: 5, ttl: 10000 } })
   @Public()
   @UseGuards(RtGuard)
   @Post('refresh')
@@ -287,22 +541,68 @@ export class AuthController {
   @ApiOkResponse({
     status: 200,
     description: 'The tokens have been successfully refreshed.',
-    type: 'application/text',
   })
   @ApiUnauthorizedResponse({ status: 401, description: 'Unauthorized: No token provided.' })
-  refreshTokens(
-    @Req() req: RequestWithUser,
+  @ApiForbiddenResponse({ status: 403, description: 'Forbidden: Invalid refresh token.' })
+  @ApiInternalServerErrorResponse({
+    status: 500,
+    description: 'INTERNAL_SERVER_ERROR.',
+    type: Error,
+  })
+  async refreshTokens(
+    @Req() req: RequestWithUserDto,
     @Res({ passthrough: true }) res: Response,
-  ): Promise<void> {
-    const userId = req.user.sub;
-    const refreshToken = req.user.refreshToken;
-    return this.authService.refreshToken(userId, refreshToken, res);
+  ): Promise<string> {
+    if (!req.user) {
+      throw new UnauthorizedException();
+    }
+    try {
+      const userId = req.user.sub;
+      const refreshToken = req.user.refreshToken;
+      await this.authService.refreshToken(userId, refreshToken, res);
+      return Promise.resolve('Tokens refreshed successfully');
+    } catch (error) {
+      if (error instanceof BadRequestException || error instanceof UnauthorizedException) {
+        throw error;
+      } else {
+        throw error;
+      }
+    }
   }
   /*-----------------------------*/
   /**���������BLACKLIST TOKEN���������*/
   /*__________________________*/
+
+  /** POST: http://localhost:3333/auth/revoke?users=multiple
+   {
+   "emails": ["maitysubham4041@gmail.com", "razmaityofficial@gmail.com"]
+   }
+   * It will revoke specified users refresh tokens.
+   * @param dto
+   */
+  /** POST: http://localhost:3333/auth/revoke?users=everyone
+   * It will revoke all refresh tokens
+   */
   @SkipThrottle()
   @Post('revoke')
+  @ApiOperation({ summary: 'Blacklist refresh tokens' })
+  @ApiQuery({ name: 'users', required: true, enum: ['multiple', 'everyone'] })
+  @ApiBody({ type: BlacklistRefreshTokensDto })
+  @ApiOkResponse({ status: 200, description: 'Refresh tokens blacklisted successfully.' })
+  @ApiBadRequestResponse({
+    status: 400,
+    description: 'Bad Request - Invalid data.',
+    type: Error,
+  })
+  @ApiUnauthorizedResponse({
+    status: 401,
+    description: 'Unauthorized - No token provided or invalid token.',
+  })
+  @ApiInternalServerErrorResponse({
+    status: 500,
+    description: 'INTERNAL_SERVER_ERROR.',
+    type: Error,
+  })
   // @UseGuards(AuthGuard('admin'))
   async blacklistRefreshTokens(
     @Body() dto: BlacklistRefreshTokensDto,
@@ -328,21 +628,37 @@ export class AuthController {
   /** POST: http://localhost:3333/auth/check
    bearer token: {access token}
    }
-   * It will return a new access token and refresh token.
+   * Check the current user and return the user id.
    * @param req
    */
   @SkipThrottle()
-  @UseGuards(AuthGuard('jwt'))
   @Get('check')
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: ' Check the current user' })
   @ApiOkResponse({
     status: 200,
     description: 'The user id has been successfully checked.',
-    type: 'application/text',
   })
-  @ApiUnauthorizedResponse({ status: 401, description: 'Unauthorized : No token provided.' })
-  checkUser(@Request() req: RequestWithUser) {
-    return this.authService.checkUser(req);
+  @ApiUnauthorizedResponse({
+    status: 401,
+    description: 'Unauthorized : No token provided.',
+    type: Error,
+  })
+  @ApiInternalServerErrorResponse({
+    status: 500,
+    description: 'INTERNAL_SERVER_ERROR.',
+    type: Error,
+  })
+  @UseGuards(AuthGuard('jwt'))
+  checkUser(@Request() req: RequestTypeDto) {
+    try {
+      return this.authService.checkUser(req);
+    } catch (error) {
+      if (error instanceof UnauthorizedException) {
+        throw error;
+      } else {
+        throw new InternalServerErrorException('An error occurred while checking the user.');
+      }
+    }
   }
 }
