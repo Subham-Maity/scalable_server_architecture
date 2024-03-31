@@ -6,11 +6,13 @@ import * as cookieParser from 'cookie-parser';
 import { AllExceptionsFilter } from './errors';
 import { ConfigService } from '@nestjs/config';
 import { ApiDocReady, logApplicationDetails, logServerReady } from './utils';
+import { setupSecurity } from './common';
 
 const port = 3333;
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
+  setupSecurity(app);
   app.use(cookieParser());
   app.useGlobalFilters(new AllExceptionsFilter());
   setupGlobalPipes(app);
