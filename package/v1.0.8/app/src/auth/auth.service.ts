@@ -86,7 +86,6 @@ export class AuthService {
     return payload;
   });
 
-  //TODO: Rate limit on IP address
   signupLocal = asyncErrorHandler(async (dto: AuthDto): Promise<void> => {
     const hash = await PasswordHash.hashData(dto.password);
     const user = {
@@ -234,7 +233,6 @@ export class AuthService {
   );
 
   /**Reset Password*/
-  //TODO: RATE LIMIT Based on Email or IP
   generateResetPasswordRequestToken = asyncErrorHandler(
     async (user: UserData, JWT_SECRET: string, JWT_EXPIRES_IN: string) => {
       const payload = { email: user.email, id: user.id };

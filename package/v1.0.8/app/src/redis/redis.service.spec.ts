@@ -56,7 +56,7 @@ describe('RedisService', () => {
 
       await service.set(key, value);
 
-      expect(cacheManagerMock.set).toHaveBeenCalledWith(key, value, undefined);
+      expect(cacheManagerMock.set).toHaveBeenCalledWith(key, value, 3600 * 1000);
     });
   });
 
