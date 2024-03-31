@@ -4,3 +4,4 @@
 
 # [1. redis setup with testing and using in auth otp + user gets](https://github.com/Subham-Maity/scalable_server_architecture/commit/48a95815aa258391697ce82f87092302c5f2489e) 
 
+# [2. rate limit](https://github.com/Subham-Maity/scalable_server_architecture/commit/006e57bad5d11cf085099c77a2254b05356b9a96)

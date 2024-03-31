@@ -50,4 +50,4 @@ More.....
 #### 📌 [Version 1.0.6](package/v1.0.6/documentation/README.md) - `focus`: email with nodemailer, 0Auth Gmail, BullMq, DLQ
 
 #### 📌 [Version 1.0.7](package/v1.0.7/documentation/README.md) - `focus`: register user using link, Change password, User Control, Filter Search, Pagination, Sort {Get All users}—using types, using dto
-#### 📌 [Version 1.0.8](package/v1.0.8/documentation/README.md) - `focus`: redis setup with testing and using in auth otp + user gets
+#### 📌 [Version 1.0.8](package/v1.0.8/documentation/README.md) - `focus`: redis setup with testing and using in auth otp + user gets, rate limit
