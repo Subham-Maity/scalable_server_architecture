@@ -10,4 +10,4 @@
 
 # [4. token blacklist ](https://github.com/Subham-Maity/scalable_server_architecture/commit/6d93dcccd46b3a040b7400059b491986500ef2db)
 
-# [5. error handling and auth documentation  ]()
+# [5. error handling and auth documentation  ](https://github.com/Subham-Maity/scalable_server_architecture/commit/c6edca53537f68802d4ef9d488a7928ac846b953)
