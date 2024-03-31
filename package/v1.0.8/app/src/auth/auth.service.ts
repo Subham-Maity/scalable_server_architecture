@@ -232,6 +232,35 @@ export class AuthService {
     },
   );
 
+  /**Blacklist Token*/
+  //Multiple Users
+  blacklistRefreshTokens = asyncErrorHandler(async (emails: string[]): Promise<void> => {
+    const users = await this.prisma.user.findMany({
+      where: { email: { in: emails } },
+    });
+
+    const foundEmails = users.map((user) => user.email);
+    const notFoundEmails = emails.filter((email) => !foundEmails.includes(email));
+
+    if (notFoundEmails.length > 0) {
+      throw new NotFoundException(
+        `The following emails are not present in the database: ${notFoundEmails.join(', ')}`,
+      );
+    }
+
+    await this.prisma.user.updateMany({
+      where: { email: { in: emails } },
+      data: { refreshTokenHash: null },
+    });
+  });
+
+  //Everyone
+  blacklistAllRefreshTokens = asyncErrorHandler(async (): Promise<void> => {
+    await this.prisma.user.updateMany({
+      data: { refreshTokenHash: null },
+    });
+  });
+
   /**Reset Password*/
   generateResetPasswordRequestToken = asyncErrorHandler(
     async (user: UserData, JWT_SECRET: string, JWT_EXPIRES_IN: string) => {

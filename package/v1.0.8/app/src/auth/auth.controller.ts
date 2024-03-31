@@ -1,4 +1,5 @@
 import {
+  BadRequestException,
   Body,
   Controller,
   Get,
@@ -7,6 +8,7 @@ import {
   Param,
   Patch,
   Post,
+  Query,
   Req,
   Request,
   Res,
@@ -28,10 +30,11 @@ import {
   ApiUnauthorizedResponse,
 } from '@nestjs/swagger';
 import { AuthGuard } from '@nestjs/passport';
-import { RequestWithUser } from './type';
+import { blackListActionType, RequestWithUser } from './type';
 import { Response } from 'express';
 import { ChangePasswordDto } from './dto/change-password.dto';
 import { SkipThrottle, Throttle } from '@nestjs/throttler';
+import { BlacklistRefreshTokensDto } from './dto/blacklist-refresh-token.dto';
 
 @ApiTags('🔐 Authentication')
 @Controller('auth')
@@ -295,7 +298,29 @@ export class AuthController {
     const refreshToken = req.user.refreshToken;
     return this.authService.refreshToken(userId, refreshToken, res);
   }
-
+  /*-----------------------------*/
+  /**���������BLACKLIST TOKEN���������*/
+  /*__________________________*/
+  @SkipThrottle()
+  @Post('revoke')
+  // @UseGuards(AuthGuard('admin'))
+  async blacklistRefreshTokens(
+    @Body() dto: BlacklistRefreshTokensDto,
+    @Query('users') users: blackListActionType,
+  ): Promise<{ message: string }> {
+    if (users === 'multiple') {
+      if (!dto.emails) {
+        throw new BadRequestException('Emails are required when blacklisting multiple users.');
+      }
+      await this.authService.blacklistRefreshTokens(dto.emails);
+      return { message: 'Refresh tokens blacklisted successfully' };
+    } else if (users === 'everyone') {
+      await this.authService.blacklistAllRefreshTokens();
+      return { message: 'All refresh tokens blacklisted successfully' };
+    } else {
+      throw new BadRequestException('Invalid query parameter');
+    }
+  }
   /*-----------------------------*/
   /**���������CHECK AUTH���������*/
   /*__________________________*/
