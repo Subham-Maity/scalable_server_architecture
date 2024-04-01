@@ -1,12 +1,8 @@
-# ! NestJS 🔥
+# NestJS 🔥
 
-**The best way to develop high-quality and reliable scalable APIs—with proper documentation and testing using NestJS and modern technologies like Prisma, TypeORM, Passport, JWT, Pactum, and more.**
+**Develop high-quality, reliable, and scalable APIs with NestJS.** This guide uses modern technologies like Prisma, TypeORM, Passport, JWT, Pactum, and more. It provides proper documentation and testing methods for each version of the application.
 
-> _Note:_ Everything implemented in a versioned manner, so that you can easily understand the changes and the new features added in each version and then use them in the example application.
-
-
-
-
+> _Note:_ Each version of the application is implemented separately, allowing you to understand the changes and new features added in each version.
 
 ```markdown
 📂 example
@@ -25,29 +21,34 @@
     ├───v1.0.3
     │   ├───app
     │   └───documentation
-
-More.....
+    ├───v1.0.4
+    │   ├───app
+    │   └───documentation
+    ├───v1.0.5
+    │   ├───app
+    │   └───documentation
+    ├───v1.0.6
+    │   ├───app
+    │   └───documentation
+    ├───v1.0.7
+    │   ├───app
+    │   └───documentation
+    ├───v1.0.8
+    │   ├───app
+    │   └───documentation
+More versions to come...
 ``` 
-> `app` is the main application codebase, and `documentation` is the guide to the application.
-> #### [Prisma Example Reference ](https://github.com/Subham-Maity/prisma-the-ultimate-resource/blob/main/prisma/schema.prisma)
--------
+> The `app` directory contains the main application codebase, while the `documentation` directory provides a comprehensive guide to the application.
+> #### [Prisma Example Reference](https://github.com/Subham-Maity/prisma-the-ultimate-resource/blob/main/prisma/schema.prisma)
 
+### 📚 Guide Table of Contents:
 
-### 📚 GUIDE TOC:
-
-#### 📌 [Version 1.0.0](package/v1.0.0/documentation/README.md) - `focus`: basic structure, passport auth,basic dto, db setup,testing environment
-
-#### 📌 [Version 1.0.1](package/v1.0.1/documentation/README.md) - `focus`: refresh token, access token, testing with pactum
-
-#### 📌 [Version 1.0.2](package/v1.0.2/documentation/README.md) - `focus`: swagger setup, swagger config
-
-#### 📌 [Version 1.0.3](package/v1.0.3/documentation/README.md) - `focus`: sending token using cookies
-
-#### 📌 [Version 1.0.4](package/v1.0.4/documentation/README.md) - `focus`: token set to header(auto using cookie), check user, logger
-
-#### 📌 [Version 1.0.5](package/v1.0.5/documentation/README.md) - `focus`: reset password using jwt reset password link with OTP verification, rt token(fix) generate without at,
-
-#### 📌 [Version 1.0.6](package/v1.0.6/documentation/README.md) - `focus`: email with nodemailer, 0Auth Gmail, BullMq, DLQ
-
-#### 📌 [Version 1.0.7](package/v1.0.7/documentation/README.md) - `focus`: register user using link, Change password, User Control, Filter Search, Pagination, Sort {Get All users}—using types, using dto
-#### 📌 [Version 1.0.8](package/v1.0.8/documentation/README.md) - `focus`: redis setup with testing and using in auth otp + user gets, rate limit, helmet setup,token blacklist, error handling and auth documentation, rtTokenHash Db to Redis for scalability
+-  📌 [Version 1.0.0](package/v1.0.0/documentation/README.md) - `Focus`: Basic structure, Passport authentication, basic DTO, database setup, testing environment
+-  📌 [Version 1.0.1](package/v1.0.1/documentation/README.md) - `Focus`: Refresh token, access token, testing with Pactum
+-  📌 [Version 1.0.2](package/v1.0.2/documentation/README.md) - `Focus`: Swagger setup, Swagger configuration
+-  📌 [Version 1.0.3](package/v1.0.3/documentation/README.md) - `Focus`: Sending tokens using cookies
+-  📌 [Version 1.0.4](package/v1.0.4/documentation/README.md) - `Focus`: Setting tokens to headers automatically using cookies, user checking, logger
+-  📌 [Version 1.0.5](package/v1.0.5/documentation/README.md) - `Focus`: Resetting password using JWT reset password link with OTP verification, generating refresh token without access token
+-  📌 [Version 1.0.6](package/v1.0.6/documentation/README.md) - `Focus`: Emailing with Nodemailer, OAuth Gmail, BullMq, DLQ
+-  📌 [Version 1.0.7](package/v1.0.7/documentation/README.md) - `Focus`: Registering user using link, changing password, user control, filter search, pagination, sorting (Get All users)—using types, using DTO
+-  📌 [Version 1.0.8](package/v1.0.8/documentation/README.md) - `Focus`: Redis setup with testing and using in auth OTP + user gets, rate limit, helmet setup, token blacklist, error handling and auth documentation, rtTokenHash Db to Redis for scalability
