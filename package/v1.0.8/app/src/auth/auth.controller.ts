@@ -52,7 +52,7 @@ import {
 import { AuthGuard } from '@nestjs/passport';
 import { blackListActionType } from './type';
 import { Response } from 'express';
-import { SkipThrottle, Throttle } from '@nestjs/throttler';
+import { SkipThrottle } from '@nestjs/throttler';
 
 @ApiTags('🔐 Authentication')
 @Controller('auth')
@@ -80,7 +80,8 @@ export class AuthController {
    * @param dto
    */
   @Public()
-  @Throttle({ default: { limit: 2, ttl: 120000 } })
+  @SkipThrottle()
+  // @Throttle({ default: { limit: 2, ttl: 120000 } })
   @Post('/local/signup')
   @HttpCode(HttpStatus.CREATED)
   @ApiOperation({ summary: 'Sign up a new user' })
@@ -131,7 +132,8 @@ export class AuthController {
    * @param res
    */
   @Public()
-  @Throttle({ default: { limit: 10, ttl: 60000 } })
+  @SkipThrottle()
+  // @Throttle({ default: { limit: 10, ttl: 60000 } })
   @Get('verify-account/:token')
   @HttpCode(HttpStatus.CREATED)
   @ApiOperation({ summary: 'Verify account and create a new account' })
@@ -190,7 +192,8 @@ export class AuthController {
    * @param res
    */
   @Public()
-  @Throttle({ default: { limit: 8, ttl: 120000 } })
+  @SkipThrottle()
+  // @Throttle({ default: { limit: 8, ttl: 120000 } })
   @Post('/local/signin')
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Sign in an existing user' })
@@ -421,7 +424,8 @@ export class AuthController {
    */
 
   @Public()
-  @Throttle({ default: { limit: 10, ttl: 60000 } })
+  @SkipThrottle()
+  // @Throttle({ default: { limit: 10, ttl: 60000 } })
   @Patch('reset-password')
   @HttpCode(HttpStatus.CREATED)
   @ApiOperation({ summary: 'Reset the password of the user' })
@@ -477,7 +481,8 @@ export class AuthController {
    * @param userId - The ID of the current user
    * @param dto - The change password information (old and new password)
    */
-  @Throttle({ default: { limit: 3, ttl: 60000 } })
+  @SkipThrottle()
+  // @Throttle({ default: { limit: 3, ttl: 60000 } })
   @UseGuards(AuthGuard('jwt'))
   @Patch('change-password')
   @HttpCode(HttpStatus.OK)
@@ -530,7 +535,8 @@ export class AuthController {
   //if we don't use public decorator,
   //then it will ask for AtGuard instead of RtGuard
   //Purpose: @Public() here - bypass the access token check
-  @Throttle({ default: { limit: 5, ttl: 10000 } })
+  @SkipThrottle()
+  // @Throttle({ default: { limit: 5, ttl: 10000 } })
   @Public()
   @UseGuards(RtGuard)
   @Post('refresh')

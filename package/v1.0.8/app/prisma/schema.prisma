@@ -16,8 +16,6 @@ model User {
   email String @unique
   hash  String
 
-  refreshTokenHash String?
-
   firstName String?
   lastName  String?
 

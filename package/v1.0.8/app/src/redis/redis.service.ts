@@ -34,6 +34,15 @@ export class RedisService {
     }
   }
 
+  async delMultiple(keys: string[]): Promise<void> {
+    try {
+      await Promise.all(keys.map((key) => this.cacheManager.del(key)));
+    } catch (error) {
+      Logger.error(`Error deleting multiple keys from Redis`, error);
+      throw error;
+    }
+  }
+
   async reset(): Promise<void> {
     try {
       await this.cacheManager.reset();

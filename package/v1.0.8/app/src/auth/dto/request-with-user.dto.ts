@@ -13,7 +13,6 @@ export class RequestWithUserDto {
       '  exp: 1712508108,\n' +
       "  refreshToken: 'eyJhbGciOiJIUzI1Ni...." +
       '}\n',
-    required: true,
   })
   @IsOptional()
   @IsString()

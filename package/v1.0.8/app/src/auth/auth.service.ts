@@ -20,7 +20,12 @@ import { JwtSignService, JwtVerifyService } from './jwt';
 import { PrismaService } from '../prisma';
 import { BullService } from '../queue/bull';
 import { RedisService } from '../redis';
-import { auth_otp_key_prefix_for_redis } from './constant';
+import {
+  auth_otp_key_prefix_for_redis,
+  auth_otp_ttl_for_redis,
+  auth_refresh_token_hash_key_prefix_for_redis,
+  auth_refresh_token_hash_ttl_for_redis,
+} from './constant';
 
 @Injectable()
 export class AuthService {
@@ -35,6 +40,7 @@ export class AuthService {
     private jwtVerifyService: JwtVerifyService,
     private bullService: BullService,
     private readonly otpService: RedisService,
+    private readonly rtToken: RedisService,
   ) {}
 
   /**Global*/
@@ -165,22 +171,7 @@ export class AuthService {
 
   /**Logout Local*/
   signoutLocal = asyncErrorHandler(async (userId: ConfigId, res: Response): Promise<void> => {
-    // The 'updateMany' method is used instead of 'update' because 'update' only updates the first record it finds that matches the criteria.
-    // In this case, if there are multiple records with the same 'userId' and a non-null 'refreshTokenHash', 'update' would only update one of them.
-    // By using 'updateMany', we ensure that all matching records are updated, not just the first one found.
-    // If the user clicks the logout button multiple times, the 'updateMany' function will still execute without errors,
-    // but it won't change anything after the first click because the 'refreshTokenHash' is already null.
-    await this.prisma.user.updateMany({
-      where: {
-        id: userId,
-        refreshTokenHash: {
-          not: null,
-        },
-      },
-      data: {
-        refreshTokenHash: null,
-      },
-    });
+    await this.rtToken.del(`${auth_refresh_token_hash_key_prefix_for_redis}${userId}`);
     // Clear the cookies
     clearCookie(res, 'access_token');
     clearCookie(res, 'refresh_token');
@@ -196,27 +187,31 @@ export class AuthService {
       if (!rt) {
         throw new UnauthorizedException('Refresh token not found');
       }
-      //find user by id
-      const user = await this.prisma.user.findUnique({
-        where: {
-          id: userId,
-        },
-      });
-      //return error if user not found or refresh token hash is null
-      if (!user || !user.refreshTokenHash)
-        throw new ForbiddenException('User not found or refresh token hash is null');
 
-      //verify refresh token
-      const rtMatches = await PasswordHash.verifyPassword(user.refreshTokenHash, rt);
+      // Get the stored refresh token hash from Redis
+      const storedRtHash = await this.rtToken.get(
+        `${auth_refresh_token_hash_key_prefix_for_redis}${userId}`,
+      );
 
-      //return error if refresh token does not match
+      // Verify the refresh token
+      const rtMatches = await PasswordHash.verifyPassword(storedRtHash, rt);
+
+      // Return error if refresh token does not match
       if (!rtMatches) throw new ForbiddenException('Refresh token does not match');
 
-      //token created
-      const tokens = await this.tokenService.getTokens(user.id, user.email);
+      // Token created
+      const tokens = await this.tokenService.getTokens(userId);
 
-      //refresh token hash updated in the database
-      await this.rtTokenService.updateRtHash(user.id, tokens.refresh_token);
+      // Hash the new refresh token
+      const hashedRefreshToken = await PasswordHash.hashRefreshToken(tokens.refresh_token);
+
+      // Store the new refresh token hash in Redis
+      await this.rtToken.set(
+        `${auth_refresh_token_hash_key_prefix_for_redis}${userId}`,
+        hashedRefreshToken,
+        auth_refresh_token_hash_ttl_for_redis,
+      );
+
       // Set tokens in cookies
       setCookie(res, 'access_token', tokens.access_token, cookieOptionsAt);
       setCookie(res, 'refresh_token', tokens.refresh_token, cookieOptionsRt);
@@ -230,8 +225,8 @@ export class AuthService {
       where: { email: { in: emails } },
     });
 
-    const foundEmails = users.map((user) => user.email);
-    const notFoundEmails = emails.filter((email) => !foundEmails.includes(email));
+    const foundIds = users.map((user) => user.id);
+    const notFoundEmails = emails.filter((email) => !users.some((user) => user.email === email));
 
     if (notFoundEmails.length > 0) {
       throw new NotFoundException(
@@ -239,17 +234,17 @@ export class AuthService {
       );
     }
 
-    await this.prisma.user.updateMany({
-      where: { email: { in: emails } },
-      data: { refreshTokenHash: null },
-    });
+    // Delete the refresh token hashes from Redis
+    await Promise.all(
+      foundIds.map((userId) =>
+        this.rtToken.del(`${auth_refresh_token_hash_key_prefix_for_redis}${userId}`),
+      ),
+    );
   });
 
   //Everyone
   blacklistAllRefreshTokens = asyncErrorHandler(async (): Promise<void> => {
-    await this.prisma.user.updateMany({
-      data: { refreshTokenHash: null },
-    });
+    await this.rtToken.reset();
   });
 
   /**Reset Password*/
@@ -284,7 +279,7 @@ export class AuthService {
       specialChars: false,
     };
     this.OTP = generateOTP(config_otp);
-    const expirationInSeconds = 300;
+    const expirationInSeconds = auth_otp_ttl_for_redis;
     const key = `${auth_otp_key_prefix_for_redis}${user.email}`;
     const value = this.OTP;
     await this.otpService.set(key, value, expirationInSeconds);

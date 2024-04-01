@@ -31,8 +31,6 @@ export class UserService {
     });
     delete updatedUser.hash;
 
-    delete updatedUser.refreshTokenHash;
-
     return updatedUser;
   });
 
@@ -61,9 +59,8 @@ export class UserService {
     if (!user) {
       throw new NotFoundException('User not found');
     }
-
     //Sanitize the user refreshTokenHash and Hash using sanitizer
-    const sanitizedUser = sanitize(user, ['refreshTokenHash', 'hash']);
+    const sanitizedUser = sanitize(user, ['hash']);
 
     /**____SET_Redis____*/
     try {
@@ -112,8 +109,7 @@ export class UserService {
       throw new NotFoundException('No users found');
     }
 
-    //Sanitize the users refreshTokenHash and Hash using sanitizer
-    const sanitizedUsers = users.map((user) => sanitize(user, ['refreshTokenHash', 'hash']));
+    const sanitizedUsers = users.map((user) => sanitize(user, ['hash']));
 
     /**____SET_Redis____*/
     try {
