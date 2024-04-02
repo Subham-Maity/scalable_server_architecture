@@ -16,8 +16,8 @@ model User {
   firstName String?
   lastName  String?
   deleted   Boolean  @default(false)
-  roleId    String   @db.ObjectId
-  role      Role     @relation(fields: [roleId], references: [id])
+  roleId    String?  @db.ObjectId
+  role      Role?    @relation(fields: [roleId], references: [id])
 
   @@map("users")
 }
