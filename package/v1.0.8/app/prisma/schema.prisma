@@ -8,40 +8,18 @@ datasource db {
 }
 
 model User {
-  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  id String @id @default(auto()) @map("_id") @db.ObjectId
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-  email     String   @unique
-  hash      String
+
+  email String @unique
+  hash  String
+
   firstName String?
   lastName  String?
-  deleted   Boolean  @default(false)
-  roleId    String   @db.ObjectId
-  role      Role     @relation(fields: [roleId], references: [id])
+
+  deleted Boolean @default(false)
 
   @@map("users")
-}
-
-model Role {
-  id          String   @id @default(auto()) @map("_id") @db.ObjectId
-  name        String   @unique
-  description String?
-  users       User[]
-  permissions RolePermission[]
-}
-
-model Permission {
-  id          String   @id @default(auto()) @map("_id") @db.ObjectId
-  name        String   @unique
-  description String?
-  roles       RolePermission[]
-}
-
-
-model RolePermission {
-  id          String   @id @default(auto()) @map("_id") @db.ObjectId
-  roleId      String   @db.ObjectId
-  permissionId String  @db.ObjectId
-  Role        Role     @relation(fields: [roleId], references: [id])
-  Permission  Permission @relation(fields: [permissionId], references: [id])
 }
