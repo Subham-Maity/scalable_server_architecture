@@ -19,24 +19,9 @@
     │   ├───app 
     │   └───documentation
     ├───v1.0.3
-    │   ├───app
-    │   └───documentation
-    ├───v1.0.4
-    │   ├───app
-    │   └───documentation
-    ├───v1.0.5
-    │   ├───app
-    │   └───documentation
-    ├───v1.0.6
-    │   ├───app
-    │   └───documentation
-    ├───v1.0.7
-    │   ├───app
-    │   └───documentation
-    ├───v1.0.8
-    │   ├───app
-    │   └───documentation
-More versions to come...
+        ├───app
+        └───documentation
+More versions to come.....
 ``` 
 > The `app` directory contains the main application codebase, while the `documentation` directory provides a comprehensive guide to the application.
 > #### [Prisma Example Reference](https://github.com/Subham-Maity/prisma-the-ultimate-resource/blob/main/prisma/schema.prisma)
