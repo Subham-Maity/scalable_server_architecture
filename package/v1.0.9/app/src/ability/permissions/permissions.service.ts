@@ -7,7 +7,7 @@ import { PrismaService } from '../../prisma';
 export class PermissionsService {
   constructor(private prisma: PrismaService) {}
 
-  async createPermission(name: string, action: string): Promise<Permission> {
+  async createPermission(name: string, action: string) {
     return this.prisma.permission.create({
       data: {
         name,
@@ -30,6 +30,7 @@ export class PermissionsService {
     const permission = await this.prisma.permission.findUnique({
       where: { name },
     });
+
     return permission?.id;
   }
 }

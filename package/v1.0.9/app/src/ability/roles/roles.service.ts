@@ -26,10 +26,10 @@ export class RolesService {
     });
   }
 
-  async updateRoleName(id: string, name: string): Promise<Role> {
+  async updateRoleName(id: string, name: string, description?: string): Promise<Role> {
     return this.prisma.role.update({
       where: { id },
-      data: { name },
+      data: { name, description },
     });
   }
 

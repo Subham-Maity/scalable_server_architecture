@@ -7,7 +7,9 @@ import {
   UpdatePermissionsDto,
   UpdateRoleNameDto,
 } from '../dto';
-import { PermissionsService } from './permissions.service';
+
+import { ConfigId } from '../../types';
+import { PermissionsService } from '../permissions';
 
 @Controller('roles')
 export class RolesController {
@@ -32,18 +34,22 @@ export class RolesController {
   }
 
   @Put(':id')
-  updateRoleName(@Param('id') id: string, @Body() updateRoleNameDto: UpdateRoleNameDto) {
-    return this.rolesService.updateRoleName(id, updateRoleNameDto.name);
+  updateRoleName(@Param('id') id: ConfigId, @Body() updateRoleNameDto: UpdateRoleNameDto) {
+    return this.rolesService.updateRoleName(
+      id,
+      updateRoleNameDto.name,
+      updateRoleNameDto.description,
+    );
   }
 
   @Delete(':id')
-  deleteRole(@Param('id') id: string) {
+  deleteRole(@Param('id') id: ConfigId) {
     return this.rolesService.deleteRole(id);
   }
 
   @Patch(':roleId/permissions')
   async assignPermissionsToRole(
-    @Param('roleId') roleId: string,
+    @Param('roleId') roleId: ConfigId,
     @Body() assignPermissionsDto: AssignPermissionsDto,
   ) {
     const permissionIds = await Promise.all(
