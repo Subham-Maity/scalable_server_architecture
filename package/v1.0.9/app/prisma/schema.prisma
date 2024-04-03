@@ -16,32 +16,38 @@ model User {
   firstName String?
   lastName  String?
   deleted   Boolean  @default(false)
-  roleId    String?  @db.ObjectId
   role      Role?    @relation(fields: [roleId], references: [id])
+  roleId    String?  @db.ObjectId
 
   @@map("users")
 }
 
 model Role {
-  id          String   @id @default(auto()) @map("_id") @db.ObjectId
-  name        String   @unique
+  id          String       @id @default(auto()) @map("_id") @db.ObjectId
+  name        String       @unique
   description String?
   users       User[]
   permissions RolePermission[]
+
+  @@map("roles")
 }
 
 model Permission {
-  id          String   @id @default(auto()) @map("_id") @db.ObjectId
-  name        String   @unique
-  description String?
-  roles       RolePermission[]
+  id   String @id @default(auto()) @map("_id") @db.ObjectId
+  name String @unique
+  action String
+  roles RolePermission[]
+
+  @@map("permissions")
 }
 
-
 model RolePermission {
-  id          String   @id @default(auto()) @map("_id") @db.ObjectId
-  roleId      String   @db.ObjectId
-  permissionId String  @db.ObjectId
-  Role        Role     @relation(fields: [roleId], references: [id])
-  Permission  Permission @relation(fields: [permissionId], references: [id])
+  id           String    @id @default(auto()) @map("_id") @db.ObjectId
+  role         Role      @relation(fields: [roleId], references: [id])
+  roleId       String    @db.ObjectId
+  permission   Permission @relation(fields: [permissionId], references: [id])
+  permissionId String    @db.ObjectId
+
+  @@unique([roleId, permissionId])
+  @@map("role_permissions")
 }

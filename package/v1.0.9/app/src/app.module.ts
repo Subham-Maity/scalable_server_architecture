@@ -10,6 +10,7 @@ import { PrismaModule } from './prisma';
 import { BullService, QueueModule } from './queue/bull';
 import { validateConfig } from './validation/config.joi';
 import { RedisModule } from './redis';
+import { AbilityModule } from './ability/ability.module';
 
 @Module({
   imports: [
@@ -24,6 +25,7 @@ import { RedisModule } from './redis';
     PrismaModule,
     QueueModule,
     RedisModule,
+    AbilityModule,
   ],
   //purpose: add AtGuard to the global guard list
   providers: [
