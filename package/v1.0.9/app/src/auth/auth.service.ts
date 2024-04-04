@@ -46,7 +46,16 @@ export class AuthService {
   /**Global*/
   //Use in Singing
   checkIfUserDeletedByEmail = async (email: string) => {
-    const user = await this.prisma.user.findUnique({ where: { email: email } });
+    const user = await this.prisma.user.findUnique({
+      where: { email: email },
+      include: {
+        role: {
+          include: {
+            permissions: true,
+          },
+        },
+      },
+    });
 
     if (!user) {
       throw new NotFoundException('User not found');
@@ -56,6 +65,7 @@ export class AuthService {
     }
     return user;
   };
+
   //Use in Change Password
   checkIfUserDeletedByUserId = async (userId: ConfigId) => {
     const user = await this.prisma.user.findUnique({ where: { id: userId } });
@@ -160,8 +170,12 @@ export class AuthService {
 
     if (!passwordMatches) throw new ForbiddenException('Password does not match');
 
+    // Get user's role and permissions
+    const roleId = user.role.id;
+    const permissionIds = user.role.permissions.map((permission) => permission.permissionId);
+
     //token created and returned
-    const tokens = await this.tokenService.getTokens(user.id, user.email);
+    const tokens = await this.tokenService.getTokens(user.id, user.email, roleId, permissionIds);
     await this.rtTokenService.updateRtHash(user.id, tokens.refresh_token);
 
     // Set tokens in cookies

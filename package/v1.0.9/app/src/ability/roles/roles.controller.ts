@@ -7,15 +7,16 @@ import {
   UpdatePermissionsDto,
   UpdateRoleNameDto,
 } from '../dto';
-
 import { ConfigId } from '../../types';
 import { PermissionsService } from '../permissions';
+import { PrismaService } from '../../prisma';
 
 @Controller('roles')
 export class RolesController {
   constructor(
     private readonly rolesService: RolesService,
     private readonly permissionsService: PermissionsService,
+    private readonly prisma: PrismaService,
   ) {}
 
   @Post()
@@ -24,7 +25,51 @@ export class RolesController {
   }
 
   @Get()
-  getRoles() {
+  async getRoles() {
+    const rolePermissions = await this.prisma.rolePermission.findMany({
+      where: {
+        roleId: '660e22d7d269b30e7841bbd8',
+        permissionId: '660e22dcd269b30e7841bbd9',
+      },
+    });
+
+    console.log('rolePermissions' + JSON.stringify(rolePermissions));
+    const readUsersPermission = await this.prisma.permission.findUnique({
+      where: { name: 'ReadUsers' },
+    });
+
+    console.log('ReadUsers', JSON.stringify(readUsersPermission));
+
+    const managerRole = await this.prisma.role.findUnique({
+      where: { name: 'Manager' },
+      include: { permissions: true },
+    });
+
+    console.log('managerRole', JSON.stringify(managerRole));
+
+    //Log user based on roleid
+
+    const user = await this.prisma.user.findMany({
+      where: { roleId: '660e15f4085f4eaa737d838a' },
+      include: { role: true },
+    });
+    console.log('This is User', JSON.stringify(user));
+    const user2 = await this.prisma.user.findMany({
+      where: {
+        role: {
+          permissions: {
+            some: {
+              permission: {
+                name: 'ReadUsers',
+              },
+            },
+          },
+        },
+      },
+      include: { role: true },
+    });
+
+    console.log('This is User', JSON.stringify(user2));
     return this.rolesService.getRoles();
   }
 
@@ -52,11 +97,10 @@ export class RolesController {
     @Param('roleId') roleId: ConfigId,
     @Body() assignPermissionsDto: AssignPermissionsDto,
   ) {
-    const permissionIds = await Promise.all(
-      assignPermissionsDto.permissions.map((permission) =>
-        this.permissionsService.getPermissionIdByName(permission),
-      ),
+    const permissions = await this.permissionsService.getPermissionsByNames(
+      assignPermissionsDto.permissions,
     );
+    const permissionIds = permissions.map((permission) => permission.id);
     return this.rolesService.assignPermissionsToRole(roleId, permissionIds);
   }
 
@@ -65,11 +109,10 @@ export class RolesController {
     @Param('roleId') roleId: string,
     @Body() updatePermissionsDto: UpdatePermissionsDto,
   ) {
-    const permissionIds = await Promise.all(
-      updatePermissionsDto.permissions.map((permission) =>
-        this.permissionsService.getPermissionIdByName(permission),
-      ),
+    const permissions = await this.permissionsService.getPermissionsByNames(
+      updatePermissionsDto.permissions,
     );
+    const permissionIds = permissions.map((permission) => permission.id);
     return this.rolesService.updatePermissionsForRole(roleId, permissionIds);
   }
 
@@ -78,11 +121,10 @@ export class RolesController {
     @Param('roleId') roleId: string,
     @Body() removePermissionsDto: RemovePermissionsDto,
   ) {
-    const permissionIds = await Promise.all(
-      removePermissionsDto.permissions.map((permission) =>
-        this.permissionsService.getPermissionIdByName(permission),
-      ),
+    const permissions = await this.permissionsService.getPermissionsByNames(
+      removePermissionsDto.permissions,
     );
+    const permissionIds = permissions.map((permission) => permission.id);
     return this.rolesService.removePermissionsFromRole(roleId, permissionIds);
   }
 }

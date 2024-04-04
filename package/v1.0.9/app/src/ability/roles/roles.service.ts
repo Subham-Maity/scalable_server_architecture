@@ -22,7 +22,9 @@ export class RolesService {
   async getRoleById(id: string): Promise<Role | null> {
     return this.prisma.role.findUnique({
       where: { id },
-      include: { permissions: true },
+      include: {
+        permissions: true,
+      },
     });
   }
 

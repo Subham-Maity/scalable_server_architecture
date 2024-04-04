@@ -1,33 +1,44 @@
-// permission.guard.ts
 import { Injectable, CanActivate, ExecutionContext } from '@nestjs/common';
-import { Reflector } from '@nestjs/core';
-import { parse } from 'path';
+import { PrismaService } from '../../prisma';
 
 @Injectable()
 export class PermissionGuard implements CanActivate {
-  constructor(private reflector: Reflector) {}
+  constructor(private prisma: PrismaService) {}
 
-  canActivate(context: ExecutionContext): boolean {
+  async canActivate(context: ExecutionContext): Promise<boolean> {
     const request = context.switchToHttp().getRequest();
     const user = request.user;
     const requiredPermission = this.derivePermissionFromRoute(request.method, request.route.path);
+    console.log(JSON.stringify(request.method) + 'Method');
+    console.log(JSON.stringify(request.route.path) + 'Path');
+    console.log(JSON.stringify(user) + 'User');
+    console.log(JSON.stringify(requiredPermission) + 'RequiredPermission');
 
     if (!requiredPermission) {
       return true;
     }
 
-    if (!user || !user.role || !user.role.permissions.includes(requiredPermission)) {
+    if (!user || !user.roleId || !user.permissionIds) {
       return false;
     }
 
-    return true;
+    // Load the permissions from the database using the user's permissionIds
+    const userPermissions = await this.prisma.permission.findMany({
+      where: {
+        id: { in: user.permissionIds },
+      },
+    });
+
+    console.log('userPermissions:', userPermissions);
+
+    console.log('requiredPermission:', requiredPermission);
+
+    return userPermissions.some((p) => p.name === requiredPermission);
   }
-
   derivePermissionFromRoute(method: string, path: string): string {
-    const resourcePath = parse(path).dir.split('/').filter(Boolean).join('');
     const action = getActionFromMethod(method);
-
-    return `${action}${resourcePath}`;
+    const resourceName = path.split('/').filter(Boolean).join(''); // Remove the slash from the path
+    return `${action}${resourceName.charAt(0).toUpperCase() + resourceName.slice(1)}`; // Capitalize the first letter of the resource name
   }
 }
 

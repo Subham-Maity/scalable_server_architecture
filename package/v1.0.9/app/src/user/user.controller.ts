@@ -25,7 +25,7 @@ import {
   ApiUnauthorizedResponse,
 } from '@nestjs/swagger';
 import { SkipThrottle } from '@nestjs/throttler';
-// import { PermissionGuard } from '../ability/guard';
+import { PermissionGuard } from '../ability/guard';
 
 @ApiTags('👤 User')
 @UseGuards(AtGuard)
@@ -55,8 +55,8 @@ export class UserController {
    * - Combine multiple parameters: http://localhost:3333/users?page=1&limit=10&sortBy=createdAt&order=desc&q=example&firstName=John
    */
   @SkipThrottle()
-  // @Throttle({ default: { limit: 20, ttl: 60000 } })
   @Get()
+  @UseGuards(PermissionGuard)
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Get all users' })
   @ApiOkResponse({
