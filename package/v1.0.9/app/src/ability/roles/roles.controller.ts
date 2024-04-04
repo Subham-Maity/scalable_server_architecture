@@ -26,50 +26,6 @@ export class RolesController {
 
   @Get()
   async getRoles() {
-    const rolePermissions = await this.prisma.rolePermission.findMany({
-      where: {
-        roleId: '660e22d7d269b30e7841bbd8',
-        permissionId: '660e22dcd269b30e7841bbd9',
-      },
-    });
-
-    console.log('rolePermissions' + JSON.stringify(rolePermissions));
-    const readUsersPermission = await this.prisma.permission.findUnique({
-      where: { name: 'ReadUsers' },
-    });
-
-    console.log('ReadUsers', JSON.stringify(readUsersPermission));
-
-    const managerRole = await this.prisma.role.findUnique({
-      where: { name: 'Manager' },
-      include: { permissions: true },
-    });
-
-    console.log('managerRole', JSON.stringify(managerRole));
-
-    //Log user based on roleid
-
-    const user = await this.prisma.user.findMany({
-      where: { roleId: '660e15f4085f4eaa737d838a' },
-      include: { role: true },
-    });
-    console.log('This is User', JSON.stringify(user));
-    const user2 = await this.prisma.user.findMany({
-      where: {
-        role: {
-          permissions: {
-            some: {
-              permission: {
-                name: 'ReadUsers',
-              },
-            },
-          },
-        },
-      },
-      include: { role: true },
-    });
-
-    console.log('This is User', JSON.stringify(user2));
     return this.rolesService.getRoles();
   }
 

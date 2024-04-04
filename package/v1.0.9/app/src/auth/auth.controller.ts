@@ -53,6 +53,7 @@ import { AuthGuard } from '@nestjs/passport';
 import { blackListActionType } from './type';
 import { Response } from 'express';
 import { SkipThrottle } from '@nestjs/throttler';
+import { PermissionGuard, PermissionListGuard } from '../ability/guard';
 
 @ApiTags('🔐 Authentication')
 @Controller('auth')
@@ -536,6 +537,8 @@ export class AuthController {
   //then it will ask for AtGuard instead of RtGuard
   //Purpose: @Public() here - bypass the access token check
   @SkipThrottle()
+  @UseGuards(PermissionListGuard)
+  @UseGuards(PermissionGuard)
   // @Throttle({ default: { limit: 5, ttl: 10000 } })
   @Public()
   @UseGuards(RtGuard)

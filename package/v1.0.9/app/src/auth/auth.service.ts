@@ -60,9 +60,34 @@ export class AuthService {
     if (!user) {
       throw new NotFoundException('User not found');
     }
+    //I have removed the comment,
+    // so it will not check if the deleted user is going to log in or not if you wish to do that
     if (user.deleted) {
       throw new UnauthorizedException('This account has been deleted.');
     }
+    return user;
+  };
+  //use in refresh token
+  getUserById = async (id: string) => {
+    const user = await this.prisma.user.findUnique({
+      where: { id: id },
+      include: {
+        role: {
+          include: {
+            permissions: true,
+          },
+        },
+      },
+    });
+
+    if (!user) {
+      throw new NotFoundException('User not found');
+    }
+
+    if (user.deleted) {
+      throw new UnauthorizedException('This account has been deleted.');
+    }
+
     return user;
   };
 
@@ -170,9 +195,14 @@ export class AuthService {
 
     if (!passwordMatches) throw new ForbiddenException('Password does not match');
 
-    // Get user's role and permissions
-    const roleId = user.role.id;
-    const permissionIds = user.role.permissions.map((permission) => permission.permissionId);
+    let roleId = null;
+    let permissionIds = [];
+
+    // Get user's role and permissions if they exist
+    if (user.role) {
+      roleId = user.role.id;
+      permissionIds = user.role.permissions.map((permission) => permission.permissionId);
+    }
 
     //token created and returned
     const tokens = await this.tokenService.getTokens(user.id, user.email, roleId, permissionIds);
@@ -213,8 +243,18 @@ export class AuthService {
       // Return error if refresh token does not match
       if (!rtMatches) throw new ForbiddenException('Refresh token does not match');
 
+      // Get user's role and permissions if they exist
+      const user = await this.getUserById(userId);
+      let roleId = null;
+      let permissionIds = [];
+
+      if (user.role) {
+        roleId = user.role.id;
+        permissionIds = user.role.permissions.map((permission) => permission.permissionId);
+      }
+
       // Token created
-      const tokens = await this.tokenService.getTokens(userId);
+      const tokens = await this.tokenService.getTokens(userId, user.email, roleId, permissionIds);
 
       // Hash the new refresh token
       const hashedRefreshToken = await PasswordHash.hashRefreshToken(tokens.refresh_token);

@@ -25,7 +25,7 @@ import {
   ApiUnauthorizedResponse,
 } from '@nestjs/swagger';
 import { SkipThrottle } from '@nestjs/throttler';
-import { PermissionGuard } from '../ability/guard';
+import { PermissionGuard, PermissionListGuard } from '../ability/guard';
 
 @ApiTags('👤 User')
 @UseGuards(AtGuard)
@@ -56,6 +56,7 @@ export class UserController {
    */
   @SkipThrottle()
   @Get()
+  @UseGuards(PermissionListGuard)
   @UseGuards(PermissionGuard)
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Get all users' })

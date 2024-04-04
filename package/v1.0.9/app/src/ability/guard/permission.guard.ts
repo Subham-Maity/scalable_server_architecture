@@ -1,5 +1,7 @@
 import { Injectable, CanActivate, ExecutionContext } from '@nestjs/common';
 import { PrismaService } from '../../prisma';
+import { logPermission } from './logger/permission.guard.logger';
+import { TokenUser } from '../../auth/type';
 
 @Injectable()
 export class PermissionGuard implements CanActivate {
@@ -7,18 +9,16 @@ export class PermissionGuard implements CanActivate {
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
     const request = context.switchToHttp().getRequest();
-    const user = request.user;
+    const user: TokenUser = request.user;
     const requiredPermission = this.derivePermissionFromRoute(request.method, request.route.path);
-    console.log(JSON.stringify(request.method) + 'Method');
-    console.log(JSON.stringify(request.route.path) + 'Path');
-    console.log(JSON.stringify(user) + 'User');
-    console.log(JSON.stringify(requiredPermission) + 'RequiredPermission');
 
     if (!requiredPermission) {
+      logPermission([], requiredPermission, user);
       return true;
     }
 
     if (!user || !user.roleId || !user.permissionIds) {
+      logPermission([], requiredPermission, user);
       return false;
     }
 
@@ -29,16 +29,14 @@ export class PermissionGuard implements CanActivate {
       },
     });
 
-    console.log('userPermissions:', userPermissions);
-
-    console.log('requiredPermission:', requiredPermission);
+    logPermission(userPermissions, requiredPermission, user);
 
     return userPermissions.some((p) => p.name === requiredPermission);
   }
   derivePermissionFromRoute(method: string, path: string): string {
     const action = getActionFromMethod(method);
-    const resourceName = path.split('/').filter(Boolean).join(''); // Remove the slash from the path
-    return `${action}${resourceName.charAt(0).toUpperCase() + resourceName.slice(1)}`; // Capitalize the first letter of the resource name
+    const resourceName = path.split('/').filter(Boolean).join('');
+    return `${action}${resourceName.charAt(0).toUpperCase() + resourceName.slice(1)}`;
   }
 }
 

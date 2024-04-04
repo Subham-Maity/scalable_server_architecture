@@ -4,3 +4,12 @@ export type JwtPayload = {
   roleId: string;
   permissionIds: string[];
 };
+
+export interface TokenUser {
+  sub: string;
+  email: string;
+  roleId: string;
+  permissionIds: string[];
+  iat: number;
+  exp: number;
+}
