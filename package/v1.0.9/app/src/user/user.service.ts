@@ -35,10 +35,8 @@ export class UserService {
   });
 
   /**Get User Id*/
-  getUserById = asyncErrorHandler(async (email: string) => {
-    /**Redis Setup */
-    /**____GET_Redis____*/
-    const cacheKey: string = `${users_key_prefix_for_redis}{email}`;
+  getUserById = asyncErrorHandler(async (id: string) => {
+    const cacheKey: string = `${users_key_prefix_for_redis}{id}`;
 
     try {
       const cachedUser = await this.redisService.get(cacheKey);
@@ -52,23 +50,20 @@ export class UserService {
     }
 
     Logger.error(`fn: getUserById, Cache miss`);
-    /**----End----*/
 
-    const user = await this.prisma.user.findUnique({ where: { email: email } });
+    const user = await this.prisma.user.findUnique({ where: { id: id } });
 
     if (!user) {
       throw new NotFoundException('User not found');
     }
-    //Sanitize the user refreshTokenHash and Hash using sanitizer
+
     const sanitizedUser = sanitize(user, ['hash']);
 
-    /**____SET_Redis____*/
     try {
       await this.redisService.set(cacheKey, sanitizedUser, 120);
     } catch (error) {
       Logger.error('fn: getUserById, Error setting data to Redis', error);
     }
-    /**----End----*/
 
     return sanitizedUser;
   });

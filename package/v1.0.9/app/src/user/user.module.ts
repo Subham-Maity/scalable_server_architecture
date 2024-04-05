@@ -5,6 +5,7 @@ import { FilterService, PaginationService, SearchService, SortService } from './
 import { RedisService } from '../redis';
 import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
 import { APP_GUARD } from '@nestjs/core';
+import { SaEmailIpWhitelistConstant } from '../ability/guard/list';
 
 @Module({
   imports: [
@@ -27,6 +28,7 @@ import { APP_GUARD } from '@nestjs/core';
     FilterService,
     SearchService,
     RedisService,
+    SaEmailIpWhitelistConstant,
   ],
 })
 export class UserModule {}
