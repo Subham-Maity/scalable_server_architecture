@@ -30,7 +30,7 @@ export class RolesController {
   }
 
   @Get(':id')
-  getRoleById(@Param('id') id: string) {
+  getRoleById(@Param('id') id: ConfigId) {
     return this.rolesService.getRoleById(id);
   }
 

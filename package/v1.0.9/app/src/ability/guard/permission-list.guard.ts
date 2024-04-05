@@ -1,6 +1,6 @@
 import { Injectable, CanActivate, ExecutionContext, BadRequestException } from '@nestjs/common';
-import { Permissions } from './list/permissions-list';
-import { logEnumPermission } from './logger/permission-list.guard.logger';
+import { Permissions } from './list';
+import { logEnumPermission } from './logger';
 
 type Permission = (typeof Permissions)[keyof typeof Permissions];
 @Injectable()

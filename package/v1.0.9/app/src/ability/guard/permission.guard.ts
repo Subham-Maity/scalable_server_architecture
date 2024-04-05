@@ -1,6 +1,6 @@
 import { Injectable, CanActivate, ExecutionContext } from '@nestjs/common';
 import { PrismaService } from '../../prisma';
-import { logPermission } from './logger/permission.guard.logger';
+import { logPermission } from './logger';
 import { TokenUser } from '../../auth/type';
 
 @Injectable()

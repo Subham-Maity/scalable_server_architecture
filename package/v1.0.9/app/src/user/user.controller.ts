@@ -25,7 +25,7 @@ import {
   ApiUnauthorizedResponse,
 } from '@nestjs/swagger';
 import { SkipThrottle } from '@nestjs/throttler';
-import { PermissionGuard, PermissionListGuard } from '../ability/guard';
+import { AdminGuard, PermissionGuard, PermissionListGuard } from '../ability/guard';
 
 @ApiTags('👤 User')
 @UseGuards(AtGuard)
@@ -64,6 +64,7 @@ export class UserController {
     status: 200,
     description: "The users' information has been successfully retrieved.",
   })
+  @UseGuards(AdminGuard)
   @ApiUnauthorizedResponse({ status: 401, description: 'Unauthorized: No token provided.' })
   getAllUsers(@Query() dto: GetAllUsersDto) {
     return this.userService.getAllUsers(dto);
