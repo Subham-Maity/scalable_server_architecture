@@ -49,7 +49,7 @@
 ```ts
 import { Body, Controller, HttpCode, HttpStatus, Post, UseGuards } from '@nestjs/common';
 import { AuthService } from './auth.service';
-import { AuthDto } from './dto';
+import { SigninDto } from './dto';
 import { RtGuard } from './guard';
 import { Tokens } from './type';
 import { GetCurrentUser, GetCurrentUserId } from './decorator';
@@ -70,7 +70,7 @@ export class AuthController {
   @Public()
   @Post('/local/signup')
   @HttpCode(HttpStatus.CREATED)
-  signupLocal(@Body() dto: AuthDto): Promise<Tokens> {
+  signupLocal(@Body() dto: SigninDto): Promise<Tokens> {
     return this.authService.signupLocal(dto);
   }
 
@@ -83,7 +83,7 @@ export class AuthController {
   @Public()
   @Post('/local/signin')
   @HttpCode(HttpStatus.OK)
-  signinLocal(@Body() dto: AuthDto): Promise<Tokens> {
+  signinLocal(@Body() dto: SigninDto): Promise<Tokens> {
     return this.authService.signinLocal(dto);
   }
 
@@ -123,7 +123,7 @@ export class AuthController {
 
 ```
 - @HttpCode(HttpStatus.OK) - Status Code you can use it as per your requirement, for example, 200, 201, 204, 400, 401, 403, 404, 500, etc. here HttpStatus.OK is 200.
-- AuthDto - Data Transfer Object - [Check Here](#3-auth-dto)
+- SigninDto - Data Transfer Object - [Check Here](#3-auth-dto)
 - @UseGuards() - This is provided by nestjs/common package, it is used to protect the route, here we are using RtGuard to protect the route. 
 - RtGuard - [Check Here](#8-at--rt-strategy)
 - @Public() - [Check Here](#101-publicdecoratorts)
@@ -136,7 +136,7 @@ export class AuthController {
 import { IsEmail, IsNotEmpty, IsString, Matches, MaxLength, MinLength } from 'class-validator';
 import { IsDifferentFrom } from '../../common/decorator';
 
-export class AuthDto {
+export class SigninDto {
     @IsEmail({}, { message: 'Invalid email format.' })
     @IsNotEmpty({ message: 'Email is required.' })
     @IsString({ message: 'Email must be a string.' })
@@ -200,7 +200,7 @@ export function IsDifferentFrom(property: string, validationOptions?: Validation
 ```ts
 import { ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
-import { AuthDto } from './dto';
+import { SigninDto } from './dto';
 import { asyncErrorHandler } from '../errors/async-error-handler';
 import { PasswordHash } from './hash';
 import { TokenService } from './token';
@@ -211,7 +211,7 @@ import { ConfigId } from '../types';
 @Injectable()
 export class AuthService {
   /**Singup - Local*/
-  signupLocal = asyncErrorHandler(async (dto: AuthDto): Promise<Tokens> => {
+  signupLocal = asyncErrorHandler(async (dto: SigninDto): Promise<Tokens> => {
     const hash = await PasswordHash.hashData(dto.password);
     //user created
     const user = await this.prisma.user.create({
@@ -229,7 +229,7 @@ export class AuthService {
   });
 
   /**Singin - Local*/
-  signinLocal = asyncErrorHandler(async (dto: AuthDto): Promise<Tokens> => {
+  signinLocal = asyncErrorHandler(async (dto: SigninDto): Promise<Tokens> => {
     //find user
     const user = await this.prisma.user.findUnique({
       where: {

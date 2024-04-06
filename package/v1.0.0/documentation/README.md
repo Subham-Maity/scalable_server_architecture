@@ -477,12 +477,12 @@ npm i class-validator class-transformer
 
 #### 5.2 Creating and Validating DTOs
 
-Create a `dto` folder inside the `auth` folder. Inside the `dto` folder, create a file named `auth.dto.ts`. This file will define the data structure and validation rules for the authentication data.
+Create a `dto` folder inside the `auth` folder. Inside the `dto` folder, create a file named `signin.dto.ts`. This file will define the data structure and validation rules for the authentication data.
 
 ```ts
 import { IsEmail, IsNotEmpty, IsString } from 'class-validator';
 
-export class AuthDto {
+export class SigninDto {
   @IsEmail()
   @IsNotEmpty()
   email: string;
@@ -502,14 +502,14 @@ You can now use this DTO in your controller. The `@Body()` decorator in combinat
 ```ts
 import { Body, Controller, Post } from '@nestjs/common';
 import { AuthService } from './auth.service';
-import { AuthDto } from './dto';
+import { SigninDto } from './dto';
 
 @Controller('auth')
 export class AuthController {
   constructor(private authService: AuthService) {}
 
   @Post('signup')
-  signup(@Body() dto: AuthDto) {
+  signup(@Body() dto: SigninDto) {
     return this.authService.signup(dto);
   }
 
@@ -569,14 +569,14 @@ Here is the basic signup logic:
 ```ts
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
-import { AuthDto } from './dto';
+import { SigninDto } from './dto';
 import * as argon from 'argon2';
 
 @Injectable()
 export class AuthService {
   constructor(private prisma: PrismaService) {}
 
-  async signup(dto: AuthDto) {
+  async signup(dto: SigninDto) {
     const hash = await argon.hash(dto.password); //hashing the password
     const user = await this.prisma.user.create({ //creating the user
       data: { //data to be created
@@ -606,7 +606,7 @@ This will return the following response:
 However, we don't want the hash to be returned to the user. We can modify the signup function to select only the necessary fields:
 
 ```ts
-async signup(dto: AuthDto) {
+async signup(dto: SigninDto) {
     const hash = await argon.hash(dto.password); //hashing the password
     const user = await this.prisma.user.create({ //creating the user
       data: { //data to be created
@@ -627,7 +627,7 @@ async signup(dto: AuthDto) {
 Or, you can directly delete the hash:
 
 ```ts
-async signup(dto: AuthDto) {
+async signup(dto: SigninDto) {
     const hash = await argon.hash(dto.password);
     const user = await this.prisma.user.create({
         data: {
@@ -693,7 +693,7 @@ Now run `npx prisma migrate dev` to migrate the database and enter a name for th
 If you try to sign up with an email that already exists, you will get an error. This is because we are not handling the error, so let's handle the error:
 
 ```ts
- async signup(dto: AuthDto) {
+ async signup(dto: SigninDto) {
     const hash = await argon.hash(dto.password);
     try {
       const user = await this.prisma.user.create({
@@ -754,13 +754,13 @@ Now you can use this and without try-catch block:
 ```ts
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
-import { AuthDto } from './dto';
+import { SigninDto } from './dto';
 import * as argon from 'argon2';
 import { asyncErrorHandler } from '../errors/async-error-handler';
 
 @Injectable()
 export class AuthService {
-  signup = asyncErrorHandler(async (dto: AuthDto) => {
+  signup = asyncErrorHandler(async (dto: SigninDto) => {
     const hash = await argon.hash(dto.password);
     const user = await this.prisma.user.create({
       data: {
@@ -794,7 +794,7 @@ In this section, we will create a login logic using NestJS, Prisma, and argon2 f
 Here is the corresponding code:
 
 ```ts
-signin = asyncErrorHandler(async (dto: AuthDto) => {
+signin = asyncErrorHandler(async (dto: SigninDto) => {
     const user = await this.prisma.user.findUnique({
         where: {
             email: dto.email,
@@ -979,16 +979,16 @@ export class AuthModule {}
 ```ts
 import { Injectable, NotFoundException, UnauthorizedException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
-import { AuthDto } from './dto';
+import { SigninDto } from './dto';
 //other...
 import { JwtService } from '@nestjs/jwt';
 
 @Injectable()
 export class AuthService {
-  signup = asyncErrorHandler(async (dto: AuthDto) => {
+  signup = asyncErrorHandler(async (dto: SigninDto) => {
    //previous code..
   });
-  signin = asyncErrorHandler(async (dto: AuthDto) => {
+  signin = asyncErrorHandler(async (dto: SigninDto) => {
     //previous code..
   });
 
@@ -1027,7 +1027,7 @@ export class AuthService {
 ```ts
 import { Injectable, NotFoundException, UnauthorizedException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
-import { AuthDto } from './dto';
+import { SigninDto } from './dto';
 import * as argon from 'argon2';
 import { asyncErrorHandler } from '../errors/async-error-handler';
 import { JwtService } from '@nestjs/jwt';
@@ -1047,7 +1047,7 @@ export class AuthService {
         });
         return { access_token: token };
     });
-    signup = asyncErrorHandler(async (dto: AuthDto) => {
+    signup = asyncErrorHandler(async (dto: SigninDto) => {
         const hash = await argon.hash(dto.password);
         const user = await this.prisma.user.create({
             data: {
@@ -1057,7 +1057,7 @@ export class AuthService {
         });
         return this.signToken(user.id, user.email); //return the token
     });
-    signin = asyncErrorHandler(async (dto: AuthDto) => {
+    signin = asyncErrorHandler(async (dto: SigninDto) => {
         const user = await this.prisma.user.findUnique({
             where: {
                 email: dto.email,
@@ -1377,7 +1377,7 @@ export class UserController {
 ```ts
 import { Body, Controller, HttpCode, HttpStatus, Post } from '@nestjs/common';
 import { AuthService } from './auth.service';
-import { AuthDto } from './dto';
+import { SigninDto } from './dto';
 
 @Controller('auth')
 export class AuthController {
@@ -1385,12 +1385,12 @@ export class AuthController {
 
     @HttpCode(201) //use the @HttpCode decorator
     @Post('signup')
-    signup(@Body() dto: AuthDto) {
+    signup(@Body() dto: SigninDto) {
         return this.authService.signup(dto);
     }
 
     @Post('signin')
-    signin(@Body() dto: AuthDto) {
+    signin(@Body() dto: SigninDto) {
         return this.authService.signin(dto);
     }
 }
@@ -1706,7 +1706,7 @@ import { AppModule } from '../src/app.module';
 import { Test } from '@nestjs/testing';
 import { INestApplication, ValidationPipe } from '@nestjs/common';
 import { PrismaService } from '../src/prisma/prisma.service';
-import { AuthDto } from '../src/auth/dto';
+import { SigninDto } from '../src/auth/dto';
 import * as pactum from 'pactum';
 
 describe('App e2e', () => {
@@ -1736,7 +1736,7 @@ describe('App e2e', () => {
   describe('Auth', () => {
     describe('Signup', () => {
       it('should signup', () => {//remove the todo and write the test
-        const dto: AuthDto = { //create a dto object
+        const dto: SigninDto = { //create a dto object
           email: 'subham@gmail.com',
           password: 'Subham@123',
         };
@@ -1769,7 +1769,7 @@ describe('App e2e', () => {
 
 ```ts
  describe('Auth', () => {
-     const dto: AuthDto = {//delare here for reusing
+     const dto: SigninDto = {//delare here for reusing
         email: 'subham@gmail.com',
         password: 'Subham@123',
     };
@@ -1792,7 +1792,7 @@ describe('App e2e', () => {
 ```ts
 
  describe('Auth', () => {
-    const dto: AuthDto = {
+    const dto: SigninDto = {
       email: 'subham@gmail.com',
       password: 'Subham@123',
     };
@@ -1827,7 +1827,7 @@ describe('App e2e', () => {
 
 ```ts
 describe('Auth', () => {
-    const dto: AuthDto = {
+    const dto: SigninDto = {
       email: 'subham@gmail.com',
       password: 'Subham@123',
     };
@@ -1899,7 +1899,7 @@ describe('Auth', () => {
 ```ts
 
   describe('Auth', () => {
-    const dto: AuthDto = {
+    const dto: SigninDto = {
       email: 'subham@gmail.com',
       password: 'Subham@123',
     };

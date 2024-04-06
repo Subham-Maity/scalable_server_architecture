@@ -84,7 +84,7 @@ import { ApiProperty } from '@nestjs/swagger';
 import { IsEmail, IsNotEmpty, IsString, Matches, MaxLength, MinLength } from 'class-validator';
 import { IsDifferentFrom } from '../../common/decorator';
 
-export class AuthDto {
+export class SigninDto {
     
   //Swagger Decorators Use  
   @ApiProperty({
@@ -128,7 +128,7 @@ export class AuthDto {
 
 import { Body, Controller, HttpCode, HttpStatus, Post, UseGuards } from '@nestjs/common';
 import { AuthService } from './auth.service';
-import { AuthDto } from './dto';
+import { SigninDto } from './dto';
 import { RtGuard } from './guard';
 import { Tokens } from './type';
 import { GetCurrentUser, GetCurrentUserId } from './decorator';
@@ -169,9 +169,9 @@ export class AuthController {
     type: 'application/text',
   })
   @ApiBadRequestResponse({ status: 400, description: 'Bad Request: Invalid data.' })
-  @ApiBody({ type: AuthDto, description: 'The user information' })
+  @ApiBody({ type: SigninDto, description: 'The user information' })
   //:-__Swagger Decorators Use__From_End
-  signupLocal(@Body() dto: AuthDto): Promise<Tokens> {
+  signupLocal(@Body() dto: SigninDto): Promise<Tokens> {
     return this.authService.signupLocal(dto);
   }
 
@@ -193,9 +193,9 @@ export class AuthController {
   })
   @ApiBadRequestResponse({ status: 400, description: 'Bad Request: Invalid data.' })
   @ApiUnauthorizedResponse({ status: 403, description: 'Unauthorized: Password does not match.' })
-  @ApiBody({ type: AuthDto, description: 'The user credentials' })
+  @ApiBody({ type: SigninDto, description: 'The user credentials' })
   //:-__Swagger Decorators Use__From_End
-  signinLocal(@Body() dto: AuthDto): Promise<Tokens> {
+  signinLocal(@Body() dto: SigninDto): Promise<Tokens> {
     return this.authService.signinLocal(dto);
   }
 

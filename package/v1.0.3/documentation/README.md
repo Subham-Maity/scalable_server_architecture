@@ -113,7 +113,7 @@ export const cookieOptionsRt: CookieOptions = {
 
 import { Body, Controller, HttpCode, HttpStatus, Post, Res, UseGuards } from '@nestjs/common';
 import { AuthService } from './auth.service';
-import { AuthDto } from './dto';
+import { SigninDto } from './dto';
 import { RtGuard } from './guard';
 import { GetCurrentUser, GetCurrentUserId } from './decorator';
 import { Public } from '../common/decorator';
@@ -151,8 +151,8 @@ export class AuthController {
     type: 'application/text',
   })
   @ApiBadRequestResponse({ status: 400, description: 'Bad Request: Invalid data.' })
-  @ApiBody({ type: AuthDto, description: 'The user information' })
-  signupLocal(@Body() dto: AuthDto, @Res({ passthrough: true }) res: Response): Promise<void> {
+  @ApiBody({ type: SigninDto, description: 'The user information' })
+  signupLocal(@Body() dto: SigninDto, @Res({ passthrough: true }) res: Response): Promise<void> {
     return this.authService.signupLocal(dto, res);
   }
 
@@ -174,8 +174,8 @@ export class AuthController {
   })
   @ApiBadRequestResponse({ status: 400, description: 'Bad Request: Invalid data.' })
   @ApiUnauthorizedResponse({ status: 403, description: 'Unauthorized: Password does not match.' })
-  @ApiBody({ type: AuthDto, description: 'The user credentials' })
-  signinLocal(@Body() dto: AuthDto, @Res({ passthrough: true }) res: Response): Promise<void> {
+  @ApiBody({ type: SigninDto, description: 'The user credentials' })
+  signinLocal(@Body() dto: SigninDto, @Res({ passthrough: true }) res: Response): Promise<void> {
     return this.authService.signinLocal(dto, res);
   }
 
@@ -240,7 +240,7 @@ export class AuthController {
 ```ts
 import { ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
-import { AuthDto } from './dto';
+import { SigninDto } from './dto';
 import { asyncErrorHandler } from '../errors/async-error-handler';
 import { PasswordHash, RtTokenService } from './encrypt';
 import { TokenService } from './token';
@@ -252,7 +252,7 @@ import { cookieOptionsAt, cookieOptionsRt } from '../common/cookie/cookie-option
 @Injectable()
 export class AuthService {
   /**Singup - Local*/
-  signupLocal = asyncErrorHandler(async (dto: AuthDto, res: Response): Promise<void> => {
+  signupLocal = asyncErrorHandler(async (dto: SigninDto, res: Response): Promise<void> => {
     const hash = await PasswordHash.hashData(dto.password);
     const user = await this.prisma.user.create({
       data: {
@@ -272,7 +272,7 @@ export class AuthService {
   });
 
   /**Singin - Local*/
-  signinLocal = asyncErrorHandler(async (dto: AuthDto, res: Response): Promise<void> => {
+  signinLocal = asyncErrorHandler(async (dto: SigninDto, res: Response): Promise<void> => {
     //find user
     const user = await this.prisma.user.findUnique({
       where: {
