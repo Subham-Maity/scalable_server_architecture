@@ -18,7 +18,6 @@ import { UserData } from '../../type';
 import { auth_otp_key_prefix_for_redis, auth_otp_ttl_for_redis } from '../../constant';
 import { generateOTP, OTPConfig } from '../../otp';
 import { PasswordHash } from '../../encrypt';
-
 @Injectable()
 export class PasswordService {
   private OTP: string | number;

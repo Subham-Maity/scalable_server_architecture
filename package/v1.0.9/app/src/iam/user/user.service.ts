@@ -1,13 +1,12 @@
 import { Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { EditUserDto, GetAllUsersDto } from './dto';
-
 import { FilterService, PaginationService, SearchService, SortService } from './query';
 import { users_key_prefix_for_redis } from './constant';
 import { RedisService } from '../../redis';
 import { PrismaService } from '../../prisma';
 import { asyncErrorHandler } from '../../errors';
 import { ConfigId } from '../../types';
-import { sanitize } from '../../utils';
+import { sanitize } from '../common';
 
 @Injectable()
 export class UserService {

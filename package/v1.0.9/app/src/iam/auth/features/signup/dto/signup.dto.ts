@@ -8,7 +8,7 @@ import {
   MaxLength,
   MinLength,
 } from 'class-validator';
-import { IsDifferentFrom } from '../../../../../common';
+import { IsDifferentFrom } from '../../../../common';
 
 export class SignupDto {
   @ApiProperty({

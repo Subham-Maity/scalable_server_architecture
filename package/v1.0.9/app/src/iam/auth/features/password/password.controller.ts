@@ -13,7 +13,6 @@ import {
   UnauthorizedException,
   UseGuards,
 } from '@nestjs/common';
-
 import {
   ApiBadRequestResponse,
   ApiBody,
@@ -27,12 +26,9 @@ import {
   ApiTooManyRequestsResponse,
 } from '@nestjs/swagger';
 import { AuthGuard } from '@nestjs/passport';
-
 import { Response } from 'express';
 import { SkipThrottle } from '@nestjs/throttler';
-
 import { PasswordService } from './password.service';
-import { Public } from '../../../../common';
 import { CheckUserExistsGuard } from '../../guard';
 import {
   ChangePasswordDto,
@@ -42,6 +38,7 @@ import {
   VerifyOtpDto,
 } from './dto';
 import { GetCurrentUserId } from '../../decorator';
+import { Public } from '../../../common';
 
 @ApiTags('🔐 Authentication')
 @Controller('auth')

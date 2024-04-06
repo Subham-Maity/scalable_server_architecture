@@ -5,7 +5,7 @@ import { RedisService } from '../../../../redis';
 import { asyncErrorHandler } from '../../../../errors';
 import { ConfigId } from '../../../../types';
 import { auth_refresh_token_hash_key_prefix_for_redis } from '../../constant';
-import { clearCookie } from '../../../../common';
+import { clearCookie } from '../../../common';
 
 @Injectable()
 export class SignoutService {

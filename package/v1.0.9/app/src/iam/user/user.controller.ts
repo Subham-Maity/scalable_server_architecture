@@ -32,7 +32,6 @@ import {
 } from '../ability/guard';
 import { AtGuard, CheckDeletedUserGuard } from '../auth/guard';
 import { GetCurrentUser, GetCurrentUserId } from '../auth/decorator';
-
 @ApiTags('👤 User')
 @UseGuards(AtGuard)
 @Controller('users')

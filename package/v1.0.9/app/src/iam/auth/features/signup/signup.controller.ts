@@ -25,9 +25,10 @@ import {
 import { Response } from 'express';
 import { SkipThrottle } from '@nestjs/throttler';
 import { SignupService } from './signup.service';
-import { Public } from '../../../../common';
+
 import { CheckUniqueEmailGuard } from '../../guard';
 import { SignupDto, VerifyAccountDto } from './dto';
+import { Public } from '../../../common';
 
 @ApiTags('🔐 Authentication')
 @Controller('auth')

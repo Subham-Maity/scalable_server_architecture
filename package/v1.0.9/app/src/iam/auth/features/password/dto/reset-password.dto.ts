@@ -1,6 +1,6 @@
 import { IsNotEmpty, IsString, Length, Matches, MaxLength, MinLength } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
-import { IsDifferentFrom } from '../../../../../common';
+import { IsDifferentFrom } from '../../../../common';
 
 export class ResetPasswordDto {
   @ApiProperty({

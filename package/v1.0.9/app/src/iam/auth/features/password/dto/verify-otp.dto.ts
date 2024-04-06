@@ -1,6 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { IsNotEmpty, IsString, Length } from 'class-validator';
-import { IsNumericString } from '../../../../../common';
+import { IsNumericString } from '../../../../common';
 
 export class VerifyOtpDto {
   @ApiProperty({

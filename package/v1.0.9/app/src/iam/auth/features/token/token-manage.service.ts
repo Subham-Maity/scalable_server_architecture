@@ -16,7 +16,7 @@ import {
   auth_refresh_token_hash_ttl_for_redis,
 } from '../../constant';
 import { PasswordHash } from '../../encrypt';
-import { cookieOptionsAt, cookieOptionsRt, setCookie } from '../../../../common';
+import { cookieOptionsAt, cookieOptionsRt, setCookie } from '../../../common';
 
 @Injectable()
 export class TokenManageService {

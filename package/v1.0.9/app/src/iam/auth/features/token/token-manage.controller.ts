@@ -23,24 +23,19 @@ import {
   ApiUnauthorizedResponse,
   ApiInternalServerErrorResponse,
 } from '@nestjs/swagger';
-
 import { Response } from 'express';
 import { SkipThrottle } from '@nestjs/throttler';
 import { TokenManageService } from './token-manage.service';
-import { PermissionGuard, PermissionListGuard } from '../../../ability/guard';
-import { Public } from '../../../../common';
 import { RtGuard } from '../../guard';
 import { BlacklistRefreshTokensDto, RequestWithUserDto } from './dto';
 import { blackListActionType } from './type';
+import { Public } from '../../../common';
 
 @ApiTags('🔐 Authentication')
 @Controller('auth')
 export class TokenManageController {
   constructor(private tokenManageService: TokenManageService) {}
-
   @SkipThrottle()
-  @UseGuards(PermissionListGuard)
-  @UseGuards(PermissionGuard)
   // @Throttle({ default: { limit: 5, ttl: 10000 } })
   @Public()
   @UseGuards(RtGuard)

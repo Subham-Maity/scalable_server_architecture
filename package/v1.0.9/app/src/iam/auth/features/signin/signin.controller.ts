@@ -24,15 +24,15 @@ import {
 import { Response } from 'express';
 import { SkipThrottle } from '@nestjs/throttler';
 import { SigninService } from './signin.service';
-import { Public } from '../../../../common';
+
 import { SigninDto } from './dto';
 import { CheckUserExistsGuard } from '../../guard';
+import { Public } from '../../../common';
 
 @ApiTags('🔐 Authentication')
 @Controller('auth')
 export class SigninController {
   constructor(private signinService: SigninService) {}
-
   @Public()
   @SkipThrottle()
   // @Throttle({ default: { limit: 8, ttl: 120000 } })

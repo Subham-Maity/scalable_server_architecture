@@ -10,7 +10,7 @@ import { TokenService } from '../../token';
 import { PasswordHash, RtTokenService } from '../../encrypt';
 import { asyncErrorHandler } from '../../../../errors';
 import { SigninDto } from './dto';
-import { cookieOptionsAt, cookieOptionsRt, setCookie } from '../../../../common';
+import { cookieOptionsAt, cookieOptionsRt, setCookie } from '../../../common';
 
 @Injectable()
 export class SigninService {
