@@ -6,11 +6,11 @@ import {
   RemovePermissionsDto,
   UpdatePermissionsDto,
   UpdateRoleNameDto,
-} from '../dto';
+} from '../../dto';
 
 import { PermissionsService } from '../permissions';
-import { PrismaService } from '../../../prisma';
-import { ConfigId } from '../../../types';
+import { PrismaService } from '../../../../prisma';
+import { ConfigId } from '../../../../types';
 
 @Controller('roles')
 export class RolesController {

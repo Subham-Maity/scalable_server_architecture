@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { Permission } from '@prisma/client';
-import { PrismaService } from '../../../prisma';
+import { PrismaService } from '../../../../prisma';
 
 @Injectable()
 export class PermissionsService {
@@ -23,22 +23,5 @@ export class PermissionsService {
     return this.prisma.permission.findUnique({
       where: { id },
     });
-  }
-
-  async getPermissionsByNames(names: string[]): Promise<Permission[]> {
-    return this.prisma.permission.findMany({
-      where: {
-        name: {
-          in: names,
-        },
-      },
-    });
-  }
-
-  async getPermissionIdByName(name: string): Promise<string> {
-    const permission = await this.prisma.permission.findUnique({
-      where: { name },
-    });
-    return permission?.id;
   }
 }

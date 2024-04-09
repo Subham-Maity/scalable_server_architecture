@@ -1,7 +1,7 @@
 import { Body, Controller, Param, Post, UseGuards } from '@nestjs/common';
 
 import { SupremeService } from './supreme.service';
-import { AdminGuard, SuperAdminGuard } from '../guard';
+import { AdminGuard, SuperAdminGuard } from '../../guard';
 
 @Controller('supreme')
 export class SupremeController {
