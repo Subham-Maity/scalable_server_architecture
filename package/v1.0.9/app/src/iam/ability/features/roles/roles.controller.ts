@@ -8,9 +8,9 @@ import {
   UpdateRoleNameDto,
 } from '../../dto';
 
-import { PermissionsService } from '../permissions';
 import { PrismaService } from '../../../../prisma';
 import { ConfigId } from '../../../../types';
+import { PermissionsService } from '../permissions/permissions.service';
 
 @Controller('roles')
 export class RolesController {

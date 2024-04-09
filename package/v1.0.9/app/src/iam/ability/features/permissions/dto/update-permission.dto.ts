@@ -1,18 +1,18 @@
 import { IsString } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
 
-export class CreatePermissionDto {
+export class UpdatePermissionDto {
   @ApiProperty({
-    description: 'The name of the permission.',
-    example: 'read',
+    description: 'The updated name of the permission.',
+    example: 'write',
     required: true,
   })
   @IsString()
   name: string;
 
   @ApiProperty({
-    description: 'The action of the permission.',
-    example: 'create',
+    description: 'The updated action of the permission.',
+    example: 'update',
     required: true,
   })
   @IsString()
