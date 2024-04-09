@@ -7,10 +7,9 @@ import {
   HttpStatus,
   HttpCode,
   NotFoundException,
-  BadRequestException,
-  InternalServerErrorException,
   Delete,
   Put,
+  HttpException,
 } from '@nestjs/common';
 import { PermissionsService } from './permissions.service';
 import { CreatePermissionDto, UpdatePermissionDto } from './dto';
@@ -65,10 +64,14 @@ export class PermissionsController {
     type: Error,
   })
   async createPermission(@Body() createPermissionDto: CreatePermissionDto) {
-    return this.permissionsService.createPermission(
-      createPermissionDto.name,
-      createPermissionDto.action,
-    );
+    try {
+      return await this.permissionsService.createPermission(
+        createPermissionDto.name,
+        createPermissionDto.action,
+      );
+    } catch (error) {
+      throw new HttpException(error.message, HttpStatus.BAD_REQUEST);
+    }
   }
 
   @Get()
@@ -95,7 +98,11 @@ export class PermissionsController {
     type: Error,
   })
   async getPermissions() {
-    return this.permissionsService.getPermissions();
+    try {
+      return await this.permissionsService.getPermissions();
+    } catch (error) {
+      throw new HttpException(error.message, HttpStatus.INTERNAL_SERVER_ERROR);
+    }
   }
 
   @Get(':id')
@@ -123,11 +130,15 @@ export class PermissionsController {
     type: Error,
   })
   async getPermissionById(@Param() params: UserIdDto) {
-    const permission = await this.permissionsService.getPermissionById(params);
-    if (!permission) {
-      throw new NotFoundException(`Permission with ID ${params.id} not found.`);
+    try {
+      const permission = await this.permissionsService.getPermissionById(params);
+      if (!permission) {
+        throw new NotFoundException(`Permission with ID ${params.id} not found.`);
+      }
+      return permission;
+    } catch (error) {
+      throw new HttpException(error.message, HttpStatus.NOT_FOUND);
     }
-    return permission;
   }
   @Put(':id')
   @HttpCode(HttpStatus.OK)
@@ -159,7 +170,11 @@ export class PermissionsController {
     @Param() params: UserIdDto,
     @Body() updatePermissionDto: UpdatePermissionDto,
   ) {
-    return this.permissionsService.updatePermissionById(params, updatePermissionDto);
+    try {
+      return await this.permissionsService.updatePermissionById(params, updatePermissionDto);
+    } catch (error) {
+      throw new HttpException(error.message, HttpStatus.BAD_REQUEST);
+    }
   }
 
   @Delete(':id')
@@ -187,6 +202,10 @@ export class PermissionsController {
     type: Error,
   })
   async deletePermissionById(@Param() params: UserIdDto) {
-    return this.permissionsService.deletePermissionById(params);
+    try {
+      return await this.permissionsService.deletePermissionById(params);
+    } catch (error) {
+      throw new HttpException(error.message, HttpStatus.NOT_FOUND);
+    }
   }
 }
