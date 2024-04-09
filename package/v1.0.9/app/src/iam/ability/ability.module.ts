@@ -3,6 +3,8 @@ import { SaEmailIpWhitelistConstant } from './guard/list';
 import {
   PermissionsController,
   PermissionsService,
+  RelationsController,
+  RelationsService,
   RolesController,
   RolesService,
   SupremeController,
@@ -10,7 +12,13 @@ import {
 } from './features';
 
 @Module({
-  controllers: [RolesController, PermissionsController, SupremeController],
-  providers: [RolesService, PermissionsService, SupremeService, SaEmailIpWhitelistConstant],
+  controllers: [RolesController, PermissionsController, RelationsController, SupremeController],
+  providers: [
+    RolesService,
+    PermissionsService,
+    RelationsService,
+    SupremeService,
+    SaEmailIpWhitelistConstant,
+  ],
 })
 export class AbilityModule {}

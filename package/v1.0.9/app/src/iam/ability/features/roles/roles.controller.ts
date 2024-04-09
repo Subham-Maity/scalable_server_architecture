@@ -1,87 +1,185 @@
-import { Body, Controller, Delete, Get, Param, Patch, Post, Put } from '@nestjs/common';
-import { RolesService } from './roles.service';
 import {
-  AssignPermissionsDto,
-  CreateRoleDto,
-  RemovePermissionsDto,
-  UpdatePermissionsDto,
-  UpdateRoleNameDto,
-} from '../../dto';
-
-import { PrismaService } from '../../../../prisma';
+  Body,
+  Controller,
+  Delete,
+  Get,
+  Param,
+  Post,
+  Put,
+  HttpStatus,
+  HttpException,
+  HttpCode,
+  BadRequestException,
+  InternalServerErrorException,
+  NotFoundException,
+} from '@nestjs/common';
+import { RolesService } from './roles.service';
 import { ConfigId } from '../../../../types';
-import { PermissionsService } from '../permissions/permissions.service';
+import { CreateRoleDto, UpdateRoleNameDto } from './dto';
+import {
+  ApiTags,
+  ApiOperation,
+  ApiCreatedResponse,
+  ApiBody,
+  ApiParam,
+  ApiOkResponse,
+  ApiUnauthorizedResponse,
+  ApiInternalServerErrorResponse,
+  ApiBadRequestResponse,
+  ApiTooManyRequestsResponse,
+} from '@nestjs/swagger';
 
+@ApiTags('®️ Roles')
 @Controller('roles')
 export class RolesController {
-  constructor(
-    private readonly rolesService: RolesService,
-    private readonly permissionsService: PermissionsService,
-    private readonly prisma: PrismaService,
-  ) {}
-
+  constructor(private readonly rolesService: RolesService) {}
   @Post()
-  createRole(@Body() createRoleDto: CreateRoleDto) {
-    return this.rolesService.createRole(createRoleDto.name, createRoleDto.description);
+  @HttpCode(HttpStatus.CREATED)
+  @ApiOperation({ summary: 'Create a new role' })
+  @ApiBody({ type: CreateRoleDto, description: 'The role data' })
+  @ApiCreatedResponse({
+    status: HttpStatus.CREATED,
+    description: 'The role has been successfully created.',
+    type: CreateRoleDto,
+  })
+  @ApiBadRequestResponse({
+    status: 400,
+    description: 'Bad Request - Invalid data.',
+    type: BadRequestException,
+  })
+  @ApiUnauthorizedResponse({ status: 401, description: 'Unauthorized: No token provided.' })
+  @ApiTooManyRequestsResponse({
+    status: 429,
+    description: 'ThrottlerException: Too Many Requests',
+    type: Error,
+  })
+  @ApiInternalServerErrorResponse({
+    status: HttpStatus.INTERNAL_SERVER_ERROR,
+    description: 'INTERNAL_SERVER_ERROR.',
+    type: InternalServerErrorException,
+  })
+  async createRole(@Body() createRoleDto: CreateRoleDto) {
+    try {
+      return await this.rolesService.createRole(createRoleDto.name, createRoleDto.description);
+    } catch (error) {
+      throw new HttpException(error.message, HttpStatus.BAD_REQUEST);
+    }
   }
 
   @Get()
+  @ApiOperation({ summary: 'Get all roles' })
+  @ApiOkResponse({
+    status: HttpStatus.OK,
+    description: 'The roles have been successfully retrieved.',
+    type: [CreateRoleDto],
+  })
+  @ApiBadRequestResponse({
+    status: 400,
+    description: 'Bad Request - Invalid data.',
+    type: BadRequestException,
+  })
+  @ApiUnauthorizedResponse({ status: 401, description: 'Unauthorized: No token provided.' })
+  @ApiInternalServerErrorResponse({
+    status: HttpStatus.INTERNAL_SERVER_ERROR,
+    description: 'INTERNAL_SERVER_ERROR.',
+    type: InternalServerErrorException,
+  })
   async getRoles() {
-    return this.rolesService.getRoles();
+    try {
+      return await this.rolesService.getRoles();
+    } catch (error) {
+      throw new HttpException(error.message, HttpStatus.INTERNAL_SERVER_ERROR);
+    }
   }
 
   @Get(':id')
-  getRoleById(@Param('id') id: ConfigId) {
-    return this.rolesService.getRoleById(id);
+  @ApiOperation({ summary: 'Get a role by ID' })
+  @ApiParam({ name: 'id', description: 'The role ID', required: true })
+  @ApiOkResponse({
+    status: HttpStatus.OK,
+    description: 'The role has been successfully retrieved.',
+    type: CreateRoleDto,
+  })
+  @ApiBadRequestResponse({
+    status: 400,
+    description: 'Bad Request - Invalid data.',
+    type: BadRequestException,
+  })
+  @ApiUnauthorizedResponse({ status: 401, description: 'Unauthorized: No token provided.' })
+  @ApiInternalServerErrorResponse({
+    status: HttpStatus.INTERNAL_SERVER_ERROR,
+    description: 'INTERNAL_SERVER_ERROR.',
+    type: InternalServerErrorException,
+  })
+  async getRoleById(@Param('id') id: ConfigId) {
+    try {
+      const role = await this.rolesService.getRoleById(id);
+      if (!role) {
+        throw new NotFoundException(`Role with ID ${id} not found.`);
+      }
+      return role;
+    } catch (error) {
+      throw new HttpException(error.message, HttpStatus.NOT_FOUND);
+    }
   }
 
   @Put(':id')
-  updateRoleName(@Param('id') id: ConfigId, @Body() updateRoleNameDto: UpdateRoleNameDto) {
-    return this.rolesService.updateRoleName(
-      id,
-      updateRoleNameDto.name,
-      updateRoleNameDto.description,
-    );
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Update a role by ID' })
+  @ApiParam({ name: 'id', description: 'The role ID', required: true })
+  @ApiBody({ type: UpdateRoleNameDto, description: 'The new role data' })
+  @ApiOkResponse({
+    status: HttpStatus.OK,
+    description: 'The role has been successfully updated.',
+    type: UpdateRoleNameDto,
+  })
+  @ApiBadRequestResponse({
+    status: 400,
+    description: 'Bad Request - Invalid data.',
+    type: BadRequestException,
+  })
+  @ApiUnauthorizedResponse({ status: 401, description: 'Unauthorized: No token provided.' })
+  @ApiInternalServerErrorResponse({
+    status: HttpStatus.INTERNAL_SERVER_ERROR,
+    description: 'INTERNAL_SERVER_ERROR.',
+    type: InternalServerErrorException,
+  })
+  async updateRoleName(@Param('id') id: ConfigId, @Body() updateRoleNameDto: UpdateRoleNameDto) {
+    try {
+      return await this.rolesService.updateRoleName(
+        id,
+        updateRoleNameDto.name,
+        updateRoleNameDto.description,
+      );
+    } catch (error) {
+      throw new HttpException(error.message, HttpStatus.BAD_REQUEST);
+    }
   }
 
   @Delete(':id')
-  deleteRole(@Param('id') id: ConfigId) {
-    return this.rolesService.deleteRole(id);
-  }
-
-  @Patch(':roleId/permissions')
-  async assignPermissionsToRole(
-    @Param('roleId') roleId: ConfigId,
-    @Body() assignPermissionsDto: AssignPermissionsDto,
-  ) {
-    const permissions = await this.permissionsService.getPermissionsByNames(
-      assignPermissionsDto.permissions,
-    );
-    const permissionIds = permissions.map((permission) => permission.id);
-    return this.rolesService.assignPermissionsToRole(roleId, permissionIds);
-  }
-
-  @Put(':roleId/permissions')
-  async updatePermissionsForRole(
-    @Param('roleId') roleId: string,
-    @Body() updatePermissionsDto: UpdatePermissionsDto,
-  ) {
-    const permissions = await this.permissionsService.getPermissionsByNames(
-      updatePermissionsDto.permissions,
-    );
-    const permissionIds = permissions.map((permission) => permission.id);
-    return this.rolesService.updatePermissionsForRole(roleId, permissionIds);
-  }
-
-  @Delete(':roleId/permissions')
-  async removePermissionsFromRole(
-    @Param('roleId') roleId: string,
-    @Body() removePermissionsDto: RemovePermissionsDto,
-  ) {
-    const permissions = await this.permissionsService.getPermissionsByNames(
-      removePermissionsDto.permissions,
-    );
-    const permissionIds = permissions.map((permission) => permission.id);
-    return this.rolesService.removePermissionsFromRole(roleId, permissionIds);
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Delete a role by ID' })
+  @ApiParam({ name: 'id', description: 'The role ID', required: true })
+  @ApiOkResponse({
+    status: HttpStatus.OK,
+    description: 'The role has been successfully deleted.',
+  })
+  @ApiBadRequestResponse({
+    status: 400,
+    description: 'Bad Request - Invalid data.',
+    type: BadRequestException,
+  })
+  @ApiUnauthorizedResponse({ status: 401, description: 'Unauthorized: No token provided.' })
+  @ApiInternalServerErrorResponse({
+    status: HttpStatus.INTERNAL_SERVER_ERROR,
+    description: 'INTERNAL_SERVER_ERROR.',
+    type: InternalServerErrorException,
+  })
+  async deleteRole(@Param('id') id: ConfigId) {
+    try {
+      return await this.rolesService.deleteRole(id);
+    } catch (error) {
+      throw new HttpException(error.message, HttpStatus.NOT_FOUND);
+    }
   }
 }

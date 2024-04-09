@@ -1,31 +1,16 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
-import { Permission, Role } from '@prisma/client';
 import { PrismaService } from '../../../../prisma';
+import { SetAdminDto, AssignRoleDto } from './dto';
+import { asyncErrorHandler } from '../../../../errors';
 
 @Injectable()
 export class SupremeService {
   constructor(private prisma: PrismaService) {}
 
-  async getUserRole(
-    roleId: string,
-  ): Promise<(Role & { permissions: { permission: Permission }[] }) | null> {
-    return this.prisma.role.findUnique({
-      where: { id: roleId },
-      include: {
-        permissions: {
-          include: {
-            permission: true,
-          },
-        },
-      },
-    });
-  }
-
-  async setAdminRole(email: string) {
-    const user = await this.prisma.user.findUnique({ where: { email } });
-
+  setAdminRole = asyncErrorHandler(async (dto: SetAdminDto): Promise<void> => {
+    const user = await this.prisma.user.findUnique({ where: { email: dto.email } });
     if (!user) {
-      throw new NotFoundException(`User with email ${email} not found`);
+      throw new NotFoundException(`User with email ${dto.email} not found`);
     }
 
     const adminRole = await this.prisma.role.findUnique({
@@ -43,21 +28,20 @@ export class SupremeService {
       throw new NotFoundException('Admin role not found');
     }
 
-    return this.prisma.user.update({
+    await this.prisma.user.update({
       where: { id: user.id },
       data: { roleId: adminRole.id },
     });
-  }
+  });
 
-  async assignRoleToUser(userId: string, roleId: string) {
-    const user = await this.prisma.user.findUnique({ where: { id: userId } });
-
+  assignRoleToUser = asyncErrorHandler(async (dto: AssignRoleDto): Promise<void> => {
+    const user = await this.prisma.user.findUnique({ where: { id: dto.userId } });
     if (!user) {
-      throw new NotFoundException(`User with id ${userId} not found`);
+      throw new NotFoundException(`User with ID ${dto.userId} not found`);
     }
 
     const role = await this.prisma.role.findUnique({
-      where: { id: roleId },
+      where: { id: dto.roleId },
       include: {
         permissions: {
           include: {
@@ -68,12 +52,12 @@ export class SupremeService {
     });
 
     if (!role) {
-      throw new NotFoundException(`Role with id ${roleId} not found`);
+      throw new NotFoundException(`Role with ID ${dto.roleId} not found`);
     }
 
-    return this.prisma.user.update({
-      where: { id: userId },
+    await this.prisma.user.update({
+      where: { id: dto.userId },
       data: { roleId: role.id },
     });
-  }
+  });
 }

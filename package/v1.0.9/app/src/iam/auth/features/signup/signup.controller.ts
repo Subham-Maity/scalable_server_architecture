@@ -40,7 +40,7 @@ export class SignupController {
   // @Throttle({ default: { limit: 2, ttl: 120000 } })
   @Post('/local/signup')
   @HttpCode(HttpStatus.CREATED)
-  @ApiOperation({ summary: '' })
+  @ApiOperation({ summary: 'Signup a user' })
   @ApiBody({ type: SignupDto, description: 'The user information' })
   @ApiOperation({
     summary: 'Sign up a new user',
@@ -87,7 +87,7 @@ export class SignupController {
       if (error instanceof BadRequestException || error instanceof ConflictException) {
         throw error;
       } else {
-        throw new InternalServerErrorException('An error occurred while creating the user.');
+        throw new InternalServerErrorException(error);
       }
     }
   }
@@ -140,9 +140,7 @@ export class SignupController {
       if (error instanceof BadRequestException || error instanceof NotFoundException) {
         throw error;
       } else {
-        throw new InternalServerErrorException(
-          'An error occurred while verifying the user account.',
-        );
+        throw new InternalServerErrorException(error);
       }
     }
   }
