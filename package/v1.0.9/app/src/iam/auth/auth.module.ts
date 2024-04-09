@@ -24,6 +24,7 @@ import {
   TokenManageController,
   TokenManageService,
 } from './features';
+import { GeoService } from '../geo/geo.service';
 
 @Module({
   imports: [
@@ -70,6 +71,7 @@ import {
     MailConfig,
     BullService,
     RedisService,
+    GeoService,
   ],
 })
 export class AuthModule {}

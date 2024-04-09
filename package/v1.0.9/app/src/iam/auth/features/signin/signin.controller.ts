@@ -6,7 +6,9 @@ import {
   HttpCode,
   HttpStatus,
   InternalServerErrorException,
+  Ip,
   Post,
+  Req,
   Res,
   UnauthorizedException,
   UseGuards,
@@ -21,7 +23,7 @@ import {
   ApiInternalServerErrorResponse,
   ApiTooManyRequestsResponse,
 } from '@nestjs/swagger';
-import { Response } from 'express';
+import { Request, Response } from 'express';
 import { SkipThrottle } from '@nestjs/throttler';
 import { SigninService } from './signin.service';
 
@@ -76,12 +78,20 @@ export class SigninController {
   async signinLocal(
     @Body() dto: SigninDto,
     @Res({ passthrough: true }) res: Response,
+    //For logout info - GEO
+    @Req() req: Request,
+    @Body('reason') reason?: string,
+    @Ip() ip?: string,
   ): Promise<{ message: string }> {
     if (!dto.email || !dto.password) {
       throw new BadRequestException('Invalid data.');
     }
     try {
-      await this.signinService.signinLocal(dto, res);
+      const userAgent = req.get('user-agent') || '';
+      if (!ip || !userAgent) {
+        throw new BadRequestException('Invalid IP address or user agent.');
+      }
+      await this.signinService.signinLocal(dto, res, ip, userAgent, reason);
       return { message: `${dto.email} login successful` };
     } catch (error) {
       if (

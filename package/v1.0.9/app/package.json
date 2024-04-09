@@ -44,6 +44,7 @@
     "@nestjs/throttler": "^5.1.2",
     "@prisma/client": "^5.9.1",
     "argon2": "^0.40.1",
+    "axios": "^1.6.8",
     "bull": "^4.12.2",
     "cache-manager": "^5.4.0",
     "cache-manager-redis-store": "^3.0.1",

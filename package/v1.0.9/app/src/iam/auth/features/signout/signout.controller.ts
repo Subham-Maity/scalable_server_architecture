@@ -1,10 +1,12 @@
 import {
   BadRequestException,
+  Body,
   Controller,
   HttpCode,
   HttpStatus,
   InternalServerErrorException,
   Post,
+  Req,
   Res,
 } from '@nestjs/common';
 
@@ -16,12 +18,12 @@ import {
   ApiInternalServerErrorResponse,
 } from '@nestjs/swagger';
 
-import { Response } from 'express';
+import { Request, Response } from 'express';
 import { SkipThrottle } from '@nestjs/throttler';
 import { SignoutService } from './signout.service';
 import { GetCurrentUserId } from '../../decorator';
 import { LogoutDto } from './dto';
-
+import { Ip } from '@nestjs/common';
 @ApiTags('🔐 Authentication')
 @Controller('auth')
 export class SignoutController {
@@ -50,12 +52,20 @@ export class SignoutController {
   async logout(
     @GetCurrentUserId() userId: LogoutDto,
     @Res({ passthrough: true }) res: Response,
+    //For logout info - GEO
+    @Req() req: Request,
+    @Body('reason') reason?: string,
+    @Ip() ip?: string,
   ): Promise<{ message: string }> {
     try {
       if (!userId) {
         throw new BadRequestException('Invalid user ID.');
       }
-      await this.signOut.signoutLocal(userId, res);
+      const userAgent = req.get('user-agent') || '';
+      if (!ip || !userAgent) {
+        throw new BadRequestException('Invalid IP address or user agent.');
+      }
+      await this.signOut.signoutLocal(userId, res, ip, userAgent, reason);
       return { message: 'User signed out successfully' };
     } catch (error) {
       if (error instanceof BadRequestException) {

@@ -1,16 +1,16 @@
-import { Controller, Get, Req, Res } from '@nestjs/common';
-import { Request, Response } from 'express';
-import { GeoUtilService } from './geo.service';
+import { Controller, Get, Param } from '@nestjs/common';
+import { GeoService } from './geo.service';
 
-@Controller('geo-util')
-export class GeoUtilController {
-  constructor(private readonly geoUtilService: GeoUtilService) {}
+@Controller('geo')
+export class GeoController {
+  constructor(private readonly geoService: GeoService) {}
 
-  @Get()
-  async getLocationDetails(@Req() request: Request, @Res() response: Response): Promise<void> {
-    const ipAddr = this.geoUtilService.getIpAddress(request);
-    const locationDetails = this.geoUtilService.getLocationDetails(ipAddr);
-
-    response.status(200).json(locationDetails);
+  @Get('ip-details/:ipAddress')
+  async getIpDetails(@Param('ipAddress') ipAddress: string) {
+    return await this.geoService.getIpDetails(ipAddress);
+  }
+  @Get('logs')
+  async getAllLogs() {
+    return this.geoService.getAllLogs();
   }
 }

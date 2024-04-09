@@ -7,8 +7,8 @@ import { BullService } from '../bull.service';
 import { MAIL_QUEUE } from '../constant';
 
 @Processor(MAIL_QUEUE)
-export class MailJobs {
-  private readonly logger = new Logger(MailJobs.name);
+export class MailProcessor {
+  private readonly logger = new Logger(MailProcessor.name);
 
   constructor(
     private mail0AuthService: Mail0AuthService,

@@ -11,6 +11,8 @@ import { PasswordHash, RtTokenService } from '../../encrypt';
 import { asyncErrorHandler } from '../../../../errors';
 import { SigninDto } from './dto';
 import { cookieOptionsAt, cookieOptionsRt, setCookie } from '../../../common';
+import { GeoService } from '../../../geo/geo.service';
+import { BullService } from '../../../../queue/bull';
 
 @Injectable()
 export class SigninService {
@@ -18,6 +20,8 @@ export class SigninService {
     private prisma: PrismaService,
     private tokenService: TokenService,
     private rtTokenService: RtTokenService,
+    private readonly geoService: GeoService,
+    private readonly queueService: BullService,
   ) {}
 
   //Use in Singing
@@ -44,30 +48,48 @@ export class SigninService {
     return user;
   };
   /**SingIn/Login - Local*/
-  signinLocal = asyncErrorHandler(async (dto: SigninDto, res: Response): Promise<void> => {
-    //find user
-    const user = await this.checkIfUserDeletedByEmail(dto.email);
+  signinLocal = asyncErrorHandler(
+    async (
+      dto: SigninDto,
+      res: Response,
+      ip: string,
+      userAgent: string,
+      reason?: string,
+    ): Promise<void> => {
+      //find user
+      const user = await this.checkIfUserDeletedByEmail(dto.email);
 
-    //verify password
-    const passwordMatches = await PasswordHash.verifyPassword(user.hash, dto.password);
+      //verify password
+      const passwordMatches = await PasswordHash.verifyPassword(user.hash, dto.password);
 
-    if (!passwordMatches) throw new ForbiddenException('Password does not match');
+      if (!passwordMatches) throw new ForbiddenException('Password does not match');
 
-    let roleId = null;
-    let permissionIds = [];
+      let roleId = null;
+      let permissionIds = [];
 
-    // Get user's role and permissions if they exist
-    if (user.role) {
-      roleId = user.role.id;
-      permissionIds = user.role.permissions.map((permission) => permission.permissionId);
-    }
+      // Get user's role and permissions if they exist
+      if (user.role) {
+        roleId = user.role.id;
+        permissionIds = user.role.permissions.map((permission) => permission.permissionId);
+      }
 
-    //token created and returned
-    const tokens = await this.tokenService.getTokens(user.id, user.email, roleId, permissionIds);
-    await this.rtTokenService.updateRtHash(user.id, tokens.refresh_token);
+      //token created and returned
+      const tokens = await this.tokenService.getTokens(user.id, user.email, roleId, permissionIds);
+      await this.rtTokenService.updateRtHash(user.id, tokens.refresh_token);
+      //Log the geo
+      // await this.geoService.geoTrack(ip, 'Login', userAgent, null, dto.email, reason);
 
-    // Set tokens in cookies
-    setCookie(res, 'access_token', tokens.access_token, cookieOptionsAt);
-    setCookie(res, 'refresh_token', tokens.refresh_token, cookieOptionsRt);
-  });
+      await this.queueService.addGeoLogJob({
+        ipAddress: ip,
+        action: 'Login',
+        userAgent,
+        userId: null,
+        email: dto.email,
+        reason,
+      });
+      // Set tokens in cookies
+      setCookie(res, 'access_token', tokens.access_token, cookieOptionsAt);
+      setCookie(res, 'refresh_token', tokens.refresh_token, cookieOptionsRt);
+    },
+  );
 }
