@@ -39,8 +39,8 @@ export class UserController {
   constructor(private userService: UserService) {}
   @SkipThrottle()
   @Get()
-  @UseGuards(PermissionListGuard)
-  @UseGuards(PermissionGuard)
+  // @UseGuards(PermissionListGuard)
+  // @UseGuards(PermissionGuard)
   @HttpCode(HttpStatus.OK)
   @ApiOperation({
     summary: 'Get all users',
@@ -69,7 +69,7 @@ export class UserController {
     description: "The users' information has been successfully retrieved.",
     type: [UserResponseDto],
   })
-  @UseGuards(AdminGuard)
+  // @UseGuards(AdminGuard)
   @ApiUnauthorizedResponse({ status: 401, description: 'Unauthorized: No token provided.' })
   @ApiInternalServerErrorResponse({
     status: 500,

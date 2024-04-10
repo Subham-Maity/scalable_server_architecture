@@ -26,6 +26,8 @@ model Role {
   id          String       @id @default(auto()) @map("_id") @db.ObjectId
   name        String       @unique
   description String?
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
   users       User[]
   permissions RolePermission[]
 
@@ -34,6 +36,8 @@ model Role {
 
 model Permission {
   id   String @id @default(auto()) @map("_id") @db.ObjectId
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
   name String @unique
   action String
   roles RolePermission[]
@@ -43,6 +47,8 @@ model Permission {
 
 model RolePermission {
   id           String    @id @default(auto()) @map("_id") @db.ObjectId
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
   role         Role      @relation(fields: [roleId], references: [id])
   roleId       String    @db.ObjectId
   permission   Permission @relation(fields: [permissionId], references: [id])
@@ -63,5 +69,5 @@ model GeoLog {
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt
 
-  @@map("UserLogs")
+  @@map("user_logs")
 }

@@ -10,15 +10,11 @@ import {
   SupremeController,
   SupremeService,
 } from './features';
+import { RoleModule } from './features/roles/role.module';
 
 @Module({
-  controllers: [RolesController, PermissionsController, RelationsController, SupremeController],
-  providers: [
-    RolesService,
-    PermissionsService,
-    RelationsService,
-    SupremeService,
-    SaEmailIpWhitelistConstant,
-  ],
+  imports: [RoleModule],
+  controllers: [PermissionsController, RelationsController, SupremeController],
+  providers: [PermissionsService, RelationsService, SupremeService, SaEmailIpWhitelistConstant],
 })
 export class AbilityModule {}

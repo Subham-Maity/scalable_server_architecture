@@ -1,11 +1,28 @@
-import { Injectable, BadRequestException, NotFoundException } from '@nestjs/common';
+import {
+  Injectable,
+  BadRequestException,
+  NotFoundException,
+  LoggerService,
+  Logger,
+} from '@nestjs/common';
 import { Role } from '@prisma/client';
 import { PrismaService } from '../../../../prisma';
 import { asyncErrorHandler } from '../../../../errors';
+import { RedisService } from '../../../../redis';
+import { GetAllRolesDto } from './dto';
+import { roles_key_prefix_for_redis } from './constant';
+import { FilterService, PaginationService, SearchService, SortService } from './query';
 
 @Injectable()
 export class RolesService {
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private prisma: PrismaService,
+    private redisService: RedisService,
+    private filterService: FilterService,
+    private paginationService: PaginationService,
+    private searchService: SearchService,
+    private sortService: SortService,
+  ) {}
 
   createRole = asyncErrorHandler(async (name: string, description?: string): Promise<Role> => {
     if (!name) {
@@ -20,8 +37,44 @@ export class RolesService {
     });
   });
 
-  getRoles = asyncErrorHandler(async (): Promise<Role[]> => {
-    return this.prisma.role.findMany();
+  getRoles = asyncErrorHandler(async (dto: GetAllRolesDto): Promise<Role[]> => {
+    // Redis setup
+    const cacheKey: string = `${roles_key_prefix_for_redis}${JSON.stringify(dto)}`;
+
+    try {
+      const cachedRoles = await this.redisService.get(cacheKey);
+      if (cachedRoles) {
+        Logger.debug(`fn: getRoles, Cache hit for ${cacheKey}`);
+        return cachedRoles as Role[];
+      }
+    } catch (error) {
+      Logger.error(`fn: getRoles, Error getting data from Redis for key ${cacheKey}`, error);
+    }
+
+    Logger.error(`fn: getRoles, Cache miss`);
+
+    const { skip, take } = this.paginationService.getPaginationParams(dto);
+    const { orderBy } = this.sortService.getSortParams(dto);
+    const { where: searchWhere } = this.searchService.getSearchParams(dto);
+    const { where: filterWhere } = this.filterService.getFilterParams(dto);
+
+    const roles = await this.prisma.role.findMany({
+      skip,
+      take,
+      orderBy,
+      where: { ...searchWhere, ...filterWhere },
+    });
+
+    if (!roles.length) {
+      throw new NotFoundException('No roles found');
+    }
+
+    try {
+      await this.redisService.set(cacheKey, roles, 30);
+    } catch (error) {
+      Logger.error('fn: getRoles, Error setting data to Redis', error);
+    }
+    return roles;
   });
 
   getRoleById = asyncErrorHandler(async (id: string): Promise<Role | null> => {

@@ -1,8 +1,17 @@
-import { IsOptional, IsString, IsIn, IsEmail, IsBoolean } from 'class-validator';
+import { IsOptional, IsString, IsIn, IsEmail, IsBoolean, IsDateString } from 'class-validator';
 import { Transform } from 'class-transformer';
 import { ApiProperty } from '@nestjs/swagger';
 
 export class GetAllUsersDto {
+  @ApiProperty({
+    description: 'The ID of the user to filter by.',
+    example: '660be4c6a7d2805486136973',
+    required: false,
+  })
+  @IsOptional()
+  @IsString()
+  id?: string;
+
   @ApiProperty({
     description: 'The page number for pagination.',
     example: 1,
@@ -82,6 +91,33 @@ export class GetAllUsersDto {
     required: false,
   })
   @IsOptional()
-  @IsBoolean()
+  @Transform(({ value }) => value === 'true', { toClassOnly: true })
   deleted?: boolean;
+
+  @ApiProperty({
+    description: 'The role ID of the user to filter by.',
+    example: '6610344b2e5213cac073aff5',
+    required: false,
+  })
+  @IsOptional()
+  @IsString()
+  roleId?: string;
+
+  @ApiProperty({
+    description: 'The created at date of the user to filter by.',
+    example: '2024-04-02T10:58:14.963Z',
+    required: false,
+  })
+  @IsOptional()
+  @IsDateString()
+  createdAt?: string;
+
+  @ApiProperty({
+    description: 'The updated at date of the user to filter by.',
+    example: '2024-04-10T10:26:56.348Z',
+    required: false,
+  })
+  @IsOptional()
+  @IsDateString()
+  updatedAt?: string;
 }

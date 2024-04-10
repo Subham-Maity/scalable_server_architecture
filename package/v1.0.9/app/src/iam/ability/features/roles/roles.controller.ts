@@ -12,10 +12,11 @@ import {
   BadRequestException,
   InternalServerErrorException,
   NotFoundException,
+  Query,
 } from '@nestjs/common';
 import { RolesService } from './roles.service';
 import { ConfigId } from '../../../../types';
-import { CreateRoleDto, UpdateRoleNameDto } from './dto';
+import { CreateRoleDto, GetAllRolesDto, UpdateRoleNameDto } from './dto';
 import {
   ApiTags,
   ApiOperation,
@@ -27,6 +28,7 @@ import {
   ApiInternalServerErrorResponse,
   ApiBadRequestResponse,
   ApiTooManyRequestsResponse,
+  ApiQuery,
 } from '@nestjs/swagger';
 
 @ApiTags('®️ Roles')
@@ -67,7 +69,29 @@ export class RolesController {
   }
 
   @Get()
-  @ApiOperation({ summary: 'Get all roles' })
+  @ApiOperation({
+    summary: 'Get all roles with search, sort, filter, and pagination',
+    description:
+      `/roles?name=TestAdmin3&description=Can%20do%20everything&createdAt=2024-04-10T11:06:44.879Z&updatedAt=2024-04-10T11:06:44.879Z` +
+      `    ` +
+      `For the below data` +
+      `    ` +
+      '[\n' +
+      '    {\n' +
+      '        "id": "661672c56e660796d53c04f0",\n' +
+      '        "name": "TestAdmin3",\n' +
+      '        "description": "Can do everything",\n' +
+      '        "createdAt": "2024-04-10T11:06:44.879Z",\n' +
+      '        "updatedAt": "2024-04-10T11:06:44.879Z"\n' +
+      '    }\n' +
+      ']',
+  })
+  @ApiQuery({ name: 'page', required: false, description: 'Page number for pagination' })
+  @ApiQuery({ name: 'limit', required: false, description: 'Items per page for pagination' })
+  @ApiQuery({ name: 'sortBy', required: false, description: 'Field to sort by' })
+  @ApiQuery({ name: 'order', required: false, description: 'Sort order (asc/desc)' })
+  @ApiQuery({ name: 'q', required: false, description: 'Search query' })
+  @ApiQuery({ name: 'name', required: false, description: 'Filter by role name' })
   @ApiOkResponse({
     status: HttpStatus.OK,
     description: 'The roles have been successfully retrieved.',
@@ -84,9 +108,9 @@ export class RolesController {
     description: 'INTERNAL_SERVER_ERROR.',
     type: InternalServerErrorException,
   })
-  async getRoles() {
+  async getRoles(@Query() dto: GetAllRolesDto) {
     try {
-      return await this.rolesService.getRoles();
+      return await this.rolesService.getRoles(dto);
     } catch (error) {
       throw new HttpException(error.message, HttpStatus.INTERNAL_SERVER_ERROR);
     }
