@@ -56,12 +56,12 @@ export class UserController {
       - **Any other field from the User model can be used for filtering**
 
       **Example Queries:**
-      - Get all users: \`http://localhost:3333/users\`
-      - Get users on page 2 with 20 items per page: \`http://localhost:3333/users?page=2&limit=20\`
-      - Get users sorted by email in descending order: \`http://localhost:3333/users?sortBy=email&order=desc\`
-      - Search for users with email containing 'example': \`http://localhost:3333/users?q=example\`
-      - Filter users by firstName 'John': \`http://localhost:3333/users?firstName=John\`
-      - Combine multiple parameters: \`http://localhost:3333/users?page=1&limit=10&sortBy=createdAt&order=desc&q=example&firstName=John\`
+      - Get all users: \`/users\`
+      - Get users on page 2 with 20 items per page: \`/users?page=1&limit=1\`
+      - Get users sorted by email in descending order: \`/users?sortBy=createdAt&order=desc\`
+      - Search for users with email containing 'example': \`/users?q=raz\`
+      - Filter users by firstName 'John': \`/users?id=660be4c6a7d2805486136973&email=maitysubham4041@gmail.com&firstName=Subham&lastName=Maity&deleted=false&roleId=6610344b2e5213cac073aff5&createdAt=2024-04-02T10:58:14.963Z&updatedAt=2024-04-10T10:26:56.348Z\`
+      - Combine multiple parameters: \`/users?id=660be4c6a7d2805486136973&email=maitysubham4041@gmail.com&firstName=Subham&lastName=Maity&deleted=false&roleId=6610344b2e5213cac073aff5&createdAt=2024-04-02T10:58:14.963Z&updatedAt=2024-04-10T10:26:56.348Z&sortBy=createdAt&order=asc&q=maity&page=1&limit=1\`
     `,
   })
   @ApiOkResponse({
