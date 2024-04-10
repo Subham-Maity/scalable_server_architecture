@@ -1,13 +1,12 @@
 import { Module } from '@nestjs/common';
 import { BullModule } from '@nestjs/bull';
-import { MailProcessor } from './jobs/mail.processor';
 import { ConfigModule, ConfigService } from '@nestjs/config';
-import { BullConfig } from './config/bull.config';
 import { Mail0AuthService, MailConfig, MailModule } from '../../mail';
 import { BullService } from './bull.service';
 import { FAIL_JOB_QUEUE, GEO_LOGS_QUEUE, MAIL_QUEUE } from './constant';
-import { GeoLogsProcessor } from './jobs/geo-logs.processor';
 import { GeoService } from '../../iam/geo/geo.service';
+import { GeoLogsProcessor, MailJobs } from './jobs';
+import { BullConfig } from './config';
 
 //docker run -p 6379:6379 redis
 @Module({
@@ -26,6 +25,18 @@ import { GeoService } from '../../iam/geo/geo.service';
             username: bullConfig.RedisUsername,
             password: bullConfig.RedisPassword,
           },
+          // Enable shared Redis connection
+          useSharedConnection: true,
+          // Enable ready check for Redis
+          enableReadyCheck: true,
+          // Enable offline queue mode
+          enableOfflineQueue: true,
+          streams: {
+            // Enable Redis Streams
+            enableStreams: true,
+            // Maximum length of a Redis stream in milliseconds
+            streamMaxLengthMaxMs: 5000,
+          },
         };
       },
     }),
@@ -40,7 +51,7 @@ import { GeoService } from '../../iam/geo/geo.service';
   providers: [
     GeoLogsProcessor,
     GeoService,
-    MailProcessor,
+    MailJobs,
     BullConfig,
     MailConfig,
     Mail0AuthService,

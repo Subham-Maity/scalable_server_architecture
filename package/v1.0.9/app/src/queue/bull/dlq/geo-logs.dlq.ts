@@ -1,11 +1,11 @@
 import { Process, Processor, OnQueueActive, OnQueueCompleted, OnQueueFailed } from '@nestjs/bull';
 import { Logger } from '@nestjs/common';
 import { Job } from 'bull';
-import { MailJob } from '../types';
+import { GeoLogJob } from '../types';
 
-@Processor('failed_mail_jobs')
-export class FailedMailJobsProcessor {
-  private readonly logger = new Logger(FailedMailJobsProcessor.name);
+@Processor('failed_geo_logs')
+export class FailedGeoLogsProcessor {
+  private readonly logger = new Logger(FailedGeoLogsProcessor.name);
 
   @OnQueueActive()
   onActive(job: Job) {
@@ -24,14 +24,15 @@ export class FailedMailJobsProcessor {
     this.logger.error(`Failed to process job ${job.id}. Error: ${error.message}`, error.stack);
   }
 
-  @Process('mail')
-  async processFailedMailJob(job: Job<MailJob>) {
-    // Here you can handle the failed mail job. For example, you can log the job data:
+  @Process('geo-track')
+  async processFailedGeoLogJob(job: Job<GeoLogJob>) {
+    // Here you can handle the failed geo log job. For example, you can log the job data:
     this.logger.error(
-      `Failed to send mail for job ${job.id}. Job data: ${JSON.stringify(job.data)}`,
+      `Failed to process geo log for job ${job.id}. Job data: ${JSON.stringify(job.data)}`,
     );
+
     //TODO
-    // You can also implement additional logic to handle failed mail jobs,
+    // You can also implement additional logic to handle failed geo log jobs,
     // such as sending notifications, retrying with different configurations, etc.
   }
 }

@@ -28,8 +28,6 @@ export class SignoutService {
     ): Promise<void> => {
       await this.rtToken.del(`${auth_refresh_token_hash_key_prefix_for_redis}${userId}`);
 
-      //Log the geo
-      await this.geoService.geoTrack(ip, 'Logout', userAgent, userId, null, reason);
       // Add a job to the geo-logs queue
       await this.queueService.addGeoLogJob({
         ipAddress: ip,

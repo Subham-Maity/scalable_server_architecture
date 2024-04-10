@@ -4,18 +4,15 @@ import { UserModule } from './user/user.module';
 import { APP_GUARD } from '@nestjs/core';
 import { AtGuard } from './auth/guard';
 import { AbilityModule } from './ability/ability.module';
-import { GeoController } from './geo/geo.controller';
-import { GeoService } from './geo/geo.service';
+import { GeoModule } from './geo/geo.module';
 
 @Module({
-  imports: [AuthModule, UserModule, AbilityModule],
-  controllers: [GeoController],
+  imports: [AuthModule, UserModule, AbilityModule, GeoModule],
   providers: [
     {
       provide: APP_GUARD,
       useClass: AtGuard,
     },
-    GeoService,
   ],
 })
 export class IamModule {}

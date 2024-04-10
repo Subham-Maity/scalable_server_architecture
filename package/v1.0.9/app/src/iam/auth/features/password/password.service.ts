@@ -91,7 +91,7 @@ export class PasswordService {
 
     const { code, link } = await this.returnPasswordResetLinkWithOtp(user);
 
-    await this.bullService.addJob({
+    await this.bullService.addMailJob({
       type: 'mail',
       data: {
         email: email,
@@ -201,7 +201,7 @@ export class PasswordService {
 
       await this.localVariables();
 
-      await this.bullService.addJob({
+      await this.bullService.addMailJob({
         type: 'mail',
         data: {
           email: payload.email,
@@ -246,7 +246,7 @@ export class PasswordService {
         );
       }
 
-      await this.bullService.addJob({
+      await this.bullService.addMailJob({
         type: 'mail',
         data: {
           email: user.email,

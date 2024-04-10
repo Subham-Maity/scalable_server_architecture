@@ -34,7 +34,7 @@ export class SignupService {
       hash,
     };
     const verificationLink = await this.generateSignupVerificationLink(user);
-    await this.bullService.addJob({
+    await this.bullService.addMailJob({
       type: 'mail',
       data: {
         email: dto.email,
@@ -84,7 +84,7 @@ export class SignupService {
       },
     });
 
-    await this.bullService.addJob({
+    await this.bullService.addMailJob({
       type: 'mail',
       data: {
         email: payload.email,

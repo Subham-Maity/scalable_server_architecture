@@ -4,7 +4,7 @@ import { Job } from 'bull';
 import { GEO_LOGS_QUEUE } from '../constant';
 import { GeoService } from '../../../iam/geo/geo.service';
 import { BullService } from '../bull.service';
-import { GeoLogJob } from '../types/geo-logs.i';
+import { GeoLogJob } from '../types';
 
 @Processor(GEO_LOGS_QUEUE)
 export class GeoLogsProcessor {
@@ -12,7 +12,7 @@ export class GeoLogsProcessor {
 
   constructor(
     private readonly geoService: GeoService,
-    private readonly queueService: BullService,
+    private readonly bullService: BullService,
   ) {}
 
   @OnQueueActive()
@@ -31,14 +31,8 @@ export class GeoLogsProcessor {
   async onError(job: Job, error: any) {
     this.logger.error(`Job ${job.id} has failed. Error: ${error.message}`, error.stack);
 
-    try {
-      await this.queueService.addJobToFailedQueue({
-        type: job.name,
-        data: job.data,
-      });
-    } catch (error) {
-      this.logger.error(`Failed to add job to failed queue. Error: ${error.message}`, error.stack);
-    }
+    // Move the failed job to the DLQ
+    await this.bullService.addJobToFailedQueue(job);
   }
 
   @Process('geo-track')

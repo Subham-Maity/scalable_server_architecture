@@ -2,13 +2,13 @@ import { Process, Processor, OnQueueActive, OnQueueCompleted, OnQueueFailed } fr
 import { Logger } from '@nestjs/common';
 import { Job } from 'bull';
 import { Mail0AuthService } from '../../../mail';
-import { MailJob } from '../types/mail-jobs.i';
 import { BullService } from '../bull.service';
 import { MAIL_QUEUE } from '../constant';
+import { MailJob } from '../types';
 
 @Processor(MAIL_QUEUE)
-export class MailProcessor {
-  private readonly logger = new Logger(MailProcessor.name);
+export class MailJobs {
+  private readonly logger = new Logger(MailJobs.name);
 
   constructor(
     private mail0AuthService: Mail0AuthService,
@@ -31,15 +31,8 @@ export class MailProcessor {
   async onError(job: Job, error: any) {
     this.logger.error(`Job ${job.id} has failed. Error: ${error.message}`, error.stack);
 
-    // move the failed job to the DLQ
-    try {
-      await this.bullService.addJobToFailedQueue({
-        type: job.name,
-        data: job.data,
-      });
-    } catch (error) {
-      this.logger.error(`Failed to add job to failed queue. Error: ${error.message}`, error.stack);
-    }
+    // Move the failed job to the DLQ
+    await this.bullService.addJobToFailedQueue(job);
   }
 
   @Process('mail')
