@@ -1,7 +1,6 @@
 import {
   Body,
   Controller,
-  Param,
   Post,
   UseGuards,
   HttpStatus,
@@ -15,7 +14,6 @@ import {
   ApiTags,
   ApiOperation,
   ApiOkResponse,
-  ApiParam,
   ApiBody,
   ApiUnauthorizedResponse,
   ApiInternalServerErrorResponse,

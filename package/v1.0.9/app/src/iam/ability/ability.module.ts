@@ -1,20 +1,10 @@
 import { Module } from '@nestjs/common';
-import { SaEmailIpWhitelistConstant } from './guard/list';
-import {
-  PermissionsController,
-  PermissionsService,
-  RelationsController,
-  RelationsService,
-  RolesController,
-  RolesService,
-  SupremeController,
-  SupremeService,
-} from './features';
 import { RoleModule } from './features/roles/role.module';
+import { PermissionsModule } from './features/permissions/permissions.module';
+import { RelationsModule } from './features/relations/relations.module';
+import { SupremeModule } from './features/supreme/supreme.module';
 
 @Module({
-  imports: [RoleModule],
-  controllers: [PermissionsController, RelationsController, SupremeController],
-  providers: [PermissionsService, RelationsService, SupremeService, SaEmailIpWhitelistConstant],
+  imports: [RoleModule, PermissionsModule, RelationsModule, SupremeModule],
 })
 export class AbilityModule {}

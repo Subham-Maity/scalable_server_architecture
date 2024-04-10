@@ -30,11 +30,13 @@ import {
   ApiTooManyRequestsResponse,
   ApiQuery,
 } from '@nestjs/swagger';
+import { SkipThrottle } from '@nestjs/throttler';
 
 @ApiTags('®️ Roles')
 @Controller('roles')
 export class RolesController {
   constructor(private readonly rolesService: RolesService) {}
+  @SkipThrottle()
   @Post()
   @HttpCode(HttpStatus.CREATED)
   @ApiOperation({ summary: 'Create a new role' })
@@ -67,12 +69,12 @@ export class RolesController {
       throw new HttpException(error.message, HttpStatus.BAD_REQUEST);
     }
   }
-
+  @SkipThrottle()
   @Get()
   @ApiOperation({
     summary: 'Get all roles',
     description: `
-      This endpoint returns a list of all users. You can use various query parameters to filter, sort, and paginate the results.
+      This endpoint returns a list of all roles. You can use various query parameters to filter, sort, and paginate the results.
 
       Query Parameters:
       - **page (number)**: The page number for pagination (default: 1)
@@ -84,10 +86,10 @@ export class RolesController {
 
       **Example Queries:**
       - Get all users: \`/roles\`
-      - Get users on page 2 with 20 items per page: \`/roles?page=1&limit=2\`
+      - Get users on page 2 with 20 items per page: \`/roles?page=2&limit=20\`
       - Get users sorted by createdAt in descending order: \`/roles?sortBy=createdAt&order=desc\`
       - Search for users with roles containing 'example': \`/roles?q=in3\`
-      - Filter users by role 'TestAdmin3': \`/roles?name=TestAdmin3&description=Can%20do%20everything&createdAt=2024-04-10T11:06:44.879Z&updatedAt=2024-04-10T11:06:44.879Z\`
+      - Filter role : \`/roles?name=TestAdmin3&description=Can%20do%20everything&createdAt=2024-04-10T11:06:44.879Z&updatedAt=2024-04-10T11:06:44.879Z\`
       - Combine multiple parameters: \`/roles?name=TestAdmin3&sortBy=createdAt&order=asc&q=dm&page=1&limit=1\`
     `,
   })
@@ -96,7 +98,12 @@ export class RolesController {
   @ApiQuery({ name: 'sortBy', required: false, description: 'Field to sort by' })
   @ApiQuery({ name: 'order', required: false, description: 'Sort order (asc/desc)' })
   @ApiQuery({ name: 'q', required: false, description: 'Search query' })
-  @ApiQuery({ name: 'name', required: false, description: 'Filter by role name' })
+  @ApiQuery({
+    type: GetAllRolesDto,
+    name: 'filters',
+    required: false,
+    description: 'Filter by role all',
+  })
   @ApiOkResponse({
     status: HttpStatus.OK,
     description: 'The roles have been successfully retrieved.',

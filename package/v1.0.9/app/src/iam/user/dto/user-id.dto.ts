@@ -7,6 +7,5 @@ export class UserIdDto {
     example: '123456789',
     required: true,
   })
-  @IsNotEmpty()
   sub: string;
 }

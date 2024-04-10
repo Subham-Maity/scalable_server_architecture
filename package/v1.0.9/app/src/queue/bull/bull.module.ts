@@ -4,15 +4,16 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 import { Mail0AuthService, MailConfig, MailModule } from '../../mail';
 import { BullService } from './bull.service';
 import { FAIL_JOB_QUEUE, GEO_LOGS_QUEUE, MAIL_QUEUE } from './constant';
-import { GeoService } from '../../iam/geo/geo.service';
 import { GeoLogsProcessor, MailJobs } from './jobs';
 import { BullConfig } from './config';
+import { GeoModule } from '../../iam/geo/geo.module';
 
 //docker run -p 6379:6379 redis
 @Module({
   imports: [
     MailModule,
     ConfigModule,
+    GeoModule,
     BullModule.forRootAsync({
       imports: [ConfigModule],
       inject: [ConfigService],
@@ -48,15 +49,7 @@ import { BullConfig } from './config';
     }),
     BullModule.registerQueue({ name: FAIL_JOB_QUEUE }),
   ],
-  providers: [
-    GeoLogsProcessor,
-    GeoService,
-    MailJobs,
-    BullConfig,
-    MailConfig,
-    Mail0AuthService,
-    BullService,
-  ],
+  providers: [GeoLogsProcessor, MailJobs, BullConfig, MailConfig, Mail0AuthService, BullService],
   exports: [BullModule, BullService],
 })
 export class QueueModule {}

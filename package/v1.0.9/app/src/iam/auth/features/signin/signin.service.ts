@@ -77,8 +77,6 @@ export class SigninService {
       const tokens = await this.tokenService.getTokens(user.id, user.email, roleId, permissionIds);
       await this.rtTokenService.updateRtHash(user.id, tokens.refresh_token);
       //Log the geo
-      // await this.geoService.geoTrack(ip, 'Login', userAgent, null, dto.email, reason);
-
       await this.queueService.addGeoLogJob({
         ipAddress: ip,
         action: 'Login',

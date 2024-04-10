@@ -1,12 +1,22 @@
-import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { Permission } from '@prisma/client';
 import { PrismaService } from '../../../../prisma';
-import { UpdatePermissionDto, UserIdDto } from './dto';
+import { GetAllPermissionsDto, UpdatePermissionDto, UserIdDto } from './dto';
 import { asyncErrorHandler } from '../../../../errors';
+import { RedisService } from '../../../../redis';
+import { FilterService, PaginationService, SearchService, SortService } from './query';
+import { permissions_key_prefix_for_redis } from './constant';
 
 @Injectable()
 export class PermissionsService {
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private prisma: PrismaService,
+    private redisService: RedisService,
+    private filterService: FilterService,
+    private paginationService: PaginationService,
+    private searchService: SearchService,
+    private sortService: SortService,
+  ) {}
 
   createPermission = asyncErrorHandler(
     async (name: string, action: string): Promise<Permission> => {
@@ -23,8 +33,44 @@ export class PermissionsService {
     },
   );
 
-  getPermissions = asyncErrorHandler(async (): Promise<Permission[]> => {
-    return this.prisma.permission.findMany();
+  getPermissions = asyncErrorHandler(async (dto: GetAllPermissionsDto) => {
+    const cacheKey: string = `${permissions_key_prefix_for_redis}${JSON.stringify(dto)}`;
+
+    try {
+      const cachedPermissions = await this.redisService.get(cacheKey);
+      if (cachedPermissions) {
+        Logger.debug(`fn: getPermissions, Cache hit for ${cacheKey}`);
+        return cachedPermissions as Permission[];
+      }
+    } catch (error) {
+      Logger.error(`fn: getPermissions, Error getting data from Redis for key ${cacheKey}`, error);
+    }
+
+    Logger.error(`fn: getPermissions, Cache miss`);
+
+    const { skip, take } = this.paginationService.getPaginationParams(dto);
+    const { orderBy } = this.sortService.getSortParams(dto);
+    const { where: searchWhere } = this.searchService.getSearchParams(dto);
+    const { where: filterWhere } = this.filterService.getFilterParams(dto);
+
+    const permissions = await this.prisma.permission.findMany({
+      skip,
+      take,
+      orderBy,
+      where: { ...searchWhere, ...filterWhere },
+    });
+
+    if (!permissions.length) {
+      throw new NotFoundException('No permissions found');
+    }
+
+    try {
+      await this.redisService.set(cacheKey, permissions, 30);
+    } catch (error) {
+      Logger.error('fn: getPermissions, Error setting data to Redis', error);
+    }
+
+    return permissions;
   });
 
   getPermissionById = asyncErrorHandler(async (id: UserIdDto): Promise<Permission | null> => {

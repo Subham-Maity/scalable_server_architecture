@@ -1,10 +1,4 @@
-import {
-  Injectable,
-  BadRequestException,
-  NotFoundException,
-  LoggerService,
-  Logger,
-} from '@nestjs/common';
+import { Injectable, BadRequestException, NotFoundException, Logger } from '@nestjs/common';
 import { Role } from '@prisma/client';
 import { PrismaService } from '../../../../prisma';
 import { asyncErrorHandler } from '../../../../errors';
@@ -29,12 +23,18 @@ export class RolesService {
       throw new BadRequestException('Role name is required.');
     }
 
-    return this.prisma.role.create({
+    const newRole = await this.prisma.role.create({
       data: {
         name,
         description,
       },
     });
+
+    // Clear the cache for roles
+    await this.redisService.delPattern(roles_key_prefix_for_redis);
+    Logger.debug(`fn: createRole, Cache cleared for pattern ${roles_key_prefix_for_redis}*`);
+
+    return newRole;
   });
 
   getRoles = asyncErrorHandler(async (dto: GetAllRolesDto): Promise<Role[]> => {
@@ -70,7 +70,7 @@ export class RolesService {
     }
 
     try {
-      await this.redisService.set(cacheKey, roles, 30);
+      await this.redisService.set(cacheKey, roles, 500);
     } catch (error) {
       Logger.error('fn: getRoles, Error setting data to Redis', error);
     }
@@ -111,6 +111,10 @@ export class RolesService {
         throw new NotFoundException(`Role with ID ${id} not found.`);
       }
 
+      // Clear the cache for roles
+      await this.redisService.delPattern(roles_key_prefix_for_redis);
+      Logger.debug(`fn: updateRoleName, Cache cleared for pattern ${roles_key_prefix_for_redis}*`);
+
       return updatedRole;
     },
   );
@@ -124,6 +128,10 @@ export class RolesService {
         where: { id },
       }),
     ]);
+
+    // Clear the cache for roles
+    await this.redisService.delPattern(roles_key_prefix_for_redis);
+    Logger.debug(`fn: deleteRole, Cache cleared for pattern ${roles_key_prefix_for_redis}*`);
 
     return deletedRole;
   });

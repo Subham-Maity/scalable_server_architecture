@@ -24,10 +24,11 @@ import {
   TokenManageController,
   TokenManageService,
 } from './features';
-import { GeoService } from '../geo/geo.service';
+import { GeoModule } from '../geo/geo.module';
 
 @Module({
   imports: [
+    GeoModule,
     ThrottlerModule.forRoot([
       {
         ttl: 3000,
@@ -71,7 +72,6 @@ import { GeoService } from '../geo/geo.service';
     MailConfig,
     BullService,
     RedisService,
-    GeoService,
   ],
 })
 export class AuthModule {}

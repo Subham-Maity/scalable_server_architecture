@@ -10,9 +10,10 @@ import {
   Delete,
   Put,
   HttpException,
+  Query,
 } from '@nestjs/common';
 import { PermissionsService } from './permissions.service';
-import { CreatePermissionDto, UpdatePermissionDto } from './dto';
+import { CreatePermissionDto, GetAllPermissionsDto, UpdatePermissionDto } from './dto';
 import { UserIdDto } from './dto';
 import {
   ApiTags,
@@ -26,6 +27,7 @@ import {
   ApiInternalServerErrorResponse,
   ApiTooManyRequestsResponse,
   ApiBadRequestResponse,
+  ApiQuery,
 } from '@nestjs/swagger';
 
 @ApiTags('🪪 Permissions')
@@ -75,7 +77,28 @@ export class PermissionsController {
   }
 
   @Get()
-  @ApiOperation({ summary: 'Get all permissions' })
+  @ApiOperation({
+    summary: 'Get all permission',
+    description: `
+      This endpoint returns a list of all permission. You can use various query parameters to filter, sort, and paginate the results.
+
+      Query Parameters:
+      - **page (number)**: The page number for pagination (default: 1)
+      - **limit (number)**: The number of items per page for pagination (default: 10)
+      - **sortBy (string)**: The field to sort by (e.g., createdAt, updatedAt)
+      - **order (string)**: The order to sort by (asc or desc, default: asc)
+      - **q (string)**: The search query to filter users by name
+      - **Any other field from the User model can be used for filtering**
+
+      **Example Queries:**
+      - Get all users: \`/permissions\`
+      - Get users on page 2 with 20 items per page: \`/permissions?page=2&limit=20\`
+      - Get users sorted by createdAt in descending order: \`/permissions?sortBy=createdAt&order=asc\`
+      - Search for users with permissions containing 'example': \`/permissions?q=y1\`
+      - Filter permissions : \`/permissions?name=Any1sss&action=Any1&createdAt=2024-04-10T10:36:57.179Z&updatedAt=2024-04-10T10:36:57.179Z\`
+      - Combine multiple parameters: \`/permissions?page=1&limit=10&sortBy=name&order=asc&q=Any1&name=Any1sss&action=Any1&createdAt=2024-04-10T10:36:57.179Z&updatedAt=2024-04-10T10:36:57.179Z\`
+    `,
+  })
   @ApiResponse({
     status: HttpStatus.OK,
     description: 'The permissions have been successfully retrieved.',
@@ -97,9 +120,20 @@ export class PermissionsController {
     description: 'INTERNAL_SERVER_ERROR.',
     type: Error,
   })
-  async getPermissions() {
+  @ApiQuery({ name: 'page', required: false, description: 'Page number for pagination' })
+  @ApiQuery({ name: 'limit', required: false, description: 'Items per page for pagination' })
+  @ApiQuery({ name: 'sortBy', required: false, description: 'Field to sort by' })
+  @ApiQuery({ name: 'order', required: false, description: 'Sort order (asc/desc)' })
+  @ApiQuery({ name: 'q', required: false, description: 'Search query' })
+  @ApiQuery({
+    type: GetAllPermissionsDto,
+    name: 'filters',
+    required: false,
+    description: 'Filter by role all',
+  })
+  async getPermissions(@Query() dto: GetAllPermissionsDto) {
     try {
-      return await this.permissionsService.getPermissions();
+      return await this.permissionsService.getPermissions(dto);
     } catch (error) {
       throw new HttpException(error.message, HttpStatus.INTERNAL_SERVER_ERROR);
     }

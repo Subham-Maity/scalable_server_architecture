@@ -30,13 +30,16 @@ export class UserService {
       data: { ...dto },
     });
     delete updatedUser.hash;
-
+    // Clear the cache for the user
+    const userCacheKey = `${users_key_prefix_for_redis}${userId}`;
+    await this.redisService.del(userCacheKey);
+    Logger.debug(`fn: editUser, Cache cleared for ${userCacheKey}`);
     return updatedUser;
   });
 
   /**Get User Id*/
   getUserById = asyncErrorHandler(async (id: string) => {
-    const cacheKey: string = `${users_key_prefix_for_redis}{id}`;
+    const cacheKey: string = `${users_key_prefix_for_redis}${id}`;
 
     try {
       const cachedUser = await this.redisService.get(cacheKey);
@@ -60,7 +63,7 @@ export class UserService {
     const sanitizedUser = sanitize(user, ['hash']);
 
     try {
-      await this.redisService.set(cacheKey, sanitizedUser, 120);
+      await this.redisService.set(cacheKey, sanitizedUser, 500);
     } catch (error) {
       Logger.error('fn: getUserById, Error setting data to Redis', error);
     }
@@ -108,7 +111,7 @@ export class UserService {
 
     /**____SET_Redis____*/
     try {
-      await this.redisService.set(cacheKey, sanitizedUsers, 30);
+      await this.redisService.set(cacheKey, sanitizedUsers, 500);
     } catch (error) {
       Logger.error('fn: getAllUsers, Error setting data to Redis', error);
     }
@@ -123,7 +126,12 @@ export class UserService {
     if (!user) {
       throw new NotFoundException('User not found');
     }
+    // Clear the cache for the user
+    const userCacheKey = `${users_key_prefix_for_redis}${userId}`;
+    await this.redisService.del(userCacheKey);
+    Logger.debug(`fn: userDelete, Cache cleared for ${userCacheKey}`);
 
+    //Return the user
     return this.prisma.user.update({
       where: { id: userId },
       data: { deleted: true },
@@ -144,7 +152,10 @@ export class UserService {
     });
 
     delete updatedUser.hash;
-
+    // Clear the cache for the user
+    const userCacheKey = `${users_key_prefix_for_redis}${userId}`;
+    await this.redisService.del(userCacheKey);
+    Logger.debug(`fn: userBack, Cache cleared for ${userCacheKey}`);
     return updatedUser;
   });
 
@@ -154,6 +165,10 @@ export class UserService {
     if (!user) {
       throw new NotFoundException('User not found');
     }
+    // Clear the cache for the user
+    const userCacheKey = `${users_key_prefix_for_redis}${userId}`;
+    await this.redisService.del(userCacheKey);
+    Logger.debug(`fn: dangerUserDelete, Cache cleared for ${userCacheKey}`);
 
     return this.prisma.user.delete({ where: { id: userId } });
   });
