@@ -13,6 +13,7 @@ import {
   InternalServerErrorException,
   NotFoundException,
   Query,
+  UseGuards,
 } from '@nestjs/common';
 import { RolesService } from './roles.service';
 import { ConfigId } from '../../../../types';
@@ -31,11 +32,40 @@ import {
   ApiQuery,
 } from '@nestjs/swagger';
 import { SkipThrottle } from '@nestjs/throttler';
+import { AdminGuard, SuperAdminGuard } from '../../guard';
 
 @ApiTags('®️ Roles')
 @Controller('roles')
 export class RolesController {
   constructor(private readonly rolesService: RolesService) {}
+  @UseGuards(SuperAdminGuard)
+  @Post('/create-admin-role')
+  @HttpCode(HttpStatus.CREATED)
+  @ApiOperation({ summary: 'Create the initial Admin role' })
+  @ApiCreatedResponse({
+    status: HttpStatus.CREATED,
+    description: 'The Admin role has been successfully created.',
+    type: CreateRoleDto,
+  })
+  @ApiBadRequestResponse({
+    status: 400,
+    description: 'Bad Request - Admin role already exists.',
+    type: BadRequestException,
+  })
+  @ApiUnauthorizedResponse({ status: 401, description: 'Unauthorized: No token provided.' })
+  @ApiInternalServerErrorResponse({
+    status: HttpStatus.INTERNAL_SERVER_ERROR,
+    description: 'INTERNAL_SERVER_ERROR.',
+    type: InternalServerErrorException,
+  })
+  async createAdminRole() {
+    try {
+      return await this.rolesService.createAdminRole();
+    } catch (error) {
+      throw new HttpException(error.message, HttpStatus.BAD_REQUEST);
+    }
+  }
+  @UseGuards(AdminGuard)
   @SkipThrottle()
   @Post()
   @HttpCode(HttpStatus.CREATED)
@@ -158,7 +188,7 @@ export class RolesController {
       throw new HttpException(error.message, HttpStatus.NOT_FOUND);
     }
   }
-
+  @UseGuards(AdminGuard)
   @Put(':id')
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Update a role by ID' })
@@ -191,7 +221,7 @@ export class RolesController {
       throw new HttpException(error.message, HttpStatus.BAD_REQUEST);
     }
   }
-
+  @UseGuards(AdminGuard)
   @Delete(':id')
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Delete a role by ID' })

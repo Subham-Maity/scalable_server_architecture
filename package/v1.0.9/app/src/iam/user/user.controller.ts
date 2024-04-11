@@ -24,7 +24,7 @@ import {
   ApiUnauthorizedResponse,
 } from '@nestjs/swagger';
 import { SkipThrottle } from '@nestjs/throttler';
-import { SuperAdminGuard } from '../ability/guard';
+import { PermissionGuard, PermissionListGuard, SuperAdminGuard } from '../ability/guard';
 import { AtGuard, CheckDeletedUserGuard } from '../auth/guard';
 import { GetCurrentUser, GetCurrentUserId } from '../auth/decorator';
 @ApiTags('👤 User')
@@ -34,8 +34,8 @@ export class UserController {
   constructor(private userService: UserService) {}
   @SkipThrottle()
   @Get()
-  // @UseGuards(PermissionListGuard)
-  // @UseGuards(PermissionGuard)
+  @UseGuards(PermissionListGuard)
+  @UseGuards(PermissionGuard)
   @HttpCode(HttpStatus.OK)
   @ApiOperation({
     summary: 'Get all users',

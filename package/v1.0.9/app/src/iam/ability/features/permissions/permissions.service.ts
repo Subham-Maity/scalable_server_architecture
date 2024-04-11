@@ -24,12 +24,20 @@ export class PermissionsService {
         throw new BadRequestException('Name and action are required.');
       }
 
-      return this.prisma.permission.create({
+      const newPermission = await this.prisma.permission.create({
         data: {
           name,
           action,
         },
       });
+
+      // Clear the cache for permissions
+      await this.redisService.delPatternSpecific(permissions_key_prefix_for_redis);
+      Logger.debug(
+        `fn: createPermission, Cache cleared for pattern ${permissions_key_prefix_for_redis}*`,
+      );
+
+      return newPermission;
     },
   );
 
@@ -65,7 +73,7 @@ export class PermissionsService {
     }
 
     try {
-      await this.redisService.set(cacheKey, permissions, 30);
+      await this.redisService.set(cacheKey, permissions, 5000);
     } catch (error) {
       Logger.error('fn: getPermissions, Error setting data to Redis', error);
     }
@@ -78,12 +86,35 @@ export class PermissionsService {
       throw new BadRequestException('Invalid user ID.');
     }
 
+    const cacheKey = `${permissions_key_prefix_for_redis}${id.id}`;
+
+    try {
+      const cachedPermission = await this.redisService.get(cacheKey);
+      if (cachedPermission) {
+        Logger.debug(`fn: getPermissionById, Cache hit for ${cacheKey}`);
+        return cachedPermission as Permission;
+      }
+    } catch (error) {
+      Logger.error(
+        `fn: getPermissionById, Error getting data from Redis for key ${cacheKey}`,
+        error,
+      );
+    }
+
+    Logger.error(`fn: getPermissionById, Cache miss`);
+
     const permission = await this.prisma.permission.findUnique({
       where: { id: id.id },
     });
 
     if (!permission) {
       throw new NotFoundException(`Permission with ID ${id.id} not found.`);
+    }
+
+    try {
+      await this.redisService.set(cacheKey, permission, 30);
+    } catch (error) {
+      Logger.error('fn: getPermissionById, Error setting data to Redis', error);
     }
 
     return permission;
@@ -94,13 +125,38 @@ export class PermissionsService {
       throw new BadRequestException('At least one permission name is required.');
     }
 
-    return this.prisma.permission.findMany({
+    const cacheKey = `${permissions_key_prefix_for_redis}names:${JSON.stringify(names)}`;
+
+    try {
+      const cachedPermissions = await this.redisService.get(cacheKey);
+      if (cachedPermissions) {
+        Logger.debug(`fn: getPermissionsByNames, Cache hit for ${cacheKey}`);
+        return cachedPermissions as Permission[];
+      }
+    } catch (error) {
+      Logger.error(
+        `fn: getPermissionsByNames, Error getting data from Redis for key ${cacheKey}`,
+        error,
+      );
+    }
+
+    Logger.error(`fn: getPermissionsByNames, Cache miss`);
+
+    const permissions = await this.prisma.permission.findMany({
       where: {
         name: {
           in: names,
         },
       },
     });
+
+    try {
+      await this.redisService.set(cacheKey, permissions, 30);
+    } catch (error) {
+      Logger.error('fn: getPermissionsByNames, Error setting data to Redis', error);
+    }
+
+    return permissions;
   });
 
   updatePermissionById = asyncErrorHandler(
@@ -109,7 +165,7 @@ export class PermissionsService {
         throw new BadRequestException('Name and action are required.');
       }
 
-      const permission = await this.prisma.permission.update({
+      const updatedPermission = await this.prisma.permission.update({
         where: { id: id.id },
         data: {
           name: data.name,
@@ -117,11 +173,22 @@ export class PermissionsService {
         },
       });
 
-      if (!permission) {
+      if (!updatedPermission) {
         throw new NotFoundException(`Permission with ID ${id.id} not found.`);
       }
 
-      return permission;
+      // Clear the cache for the specific permission
+      const cacheKey = `${permissions_key_prefix_for_redis}${id.id}`;
+      await this.redisService.del(cacheKey);
+      Logger.debug(`fn: updatePermissionById, Cache cleared for ${cacheKey}`);
+
+      // Clear the cache for all permissions
+      await this.redisService.delPatternSpecific(permissions_key_prefix_for_redis);
+      Logger.debug(
+        `fn: updatePermissionById, Cache cleared for pattern ${permissions_key_prefix_for_redis}*`,
+      );
+
+      return updatedPermission;
     },
   );
 
@@ -129,12 +196,24 @@ export class PermissionsService {
     if (!id.id) {
       throw new BadRequestException('Invalid user ID.');
     }
-    const permission = await this.prisma.permission.delete({
+
+    const deletedPermission = await this.prisma.permission.delete({
       where: { id: id.id },
     });
 
-    if (!permission) {
+    if (!deletedPermission) {
       throw new NotFoundException(`Permission with ID ${id.id} not found.`);
     }
+
+    // Clear the cache for the specific permission
+    const cacheKey = `${permissions_key_prefix_for_redis}${id.id}`;
+    await this.redisService.del(cacheKey);
+    Logger.debug(`fn: deletePermissionById, Cache cleared for ${cacheKey}`);
+
+    // Clear the cache for all permissions
+    await this.redisService.delPatternSpecific(permissions_key_prefix_for_redis);
+    Logger.debug(
+      `fn: deletePermissionById, Cache cleared for pattern ${permissions_key_prefix_for_redis}*`,
+    );
   });
 }

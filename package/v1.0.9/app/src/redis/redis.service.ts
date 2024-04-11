@@ -33,22 +33,14 @@ export class RedisService {
       throw error;
     }
   }
-  async delPattern(pattern: string): Promise<void> {
-    try {
-      const keys = await this.cacheManager.store.keys(pattern);
-      await this.delMultiple(keys);
-    } catch (error) {
-      Logger.error(`Error deleting keys matching pattern ${pattern} from Redis`, error);
-      throw error;
-    }
-  }
 
-  async delPatternSpecific(pattern: string, prefix: string): Promise<void> {
+  async delPatternSpecific(prefix: string): Promise<void> {
     try {
-      const keys = await this.cacheManager.store.keys(`${prefix}:${pattern}*`);
-      await this.delMultiple(keys);
+      const keys = await this.cacheManager.store.keys(`${prefix}*`);
+      const roleKeys = keys.filter((key) => key.startsWith(prefix));
+      await this.delMultiple(roleKeys);
     } catch (error) {
-      Logger.error(`Error deleting keys matching pattern ${pattern} from Redis`, error);
+      Logger.error(`Error deleting keys with prefix ${prefix} from Redis`, error);
       throw error;
     }
   }

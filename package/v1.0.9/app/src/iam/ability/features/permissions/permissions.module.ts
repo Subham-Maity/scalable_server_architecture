@@ -4,6 +4,7 @@ import { FilterService, PaginationService, SearchService, SortService } from './
 import { PermissionsController } from './permissions.controller';
 import { PermissionsService } from './permissions.service';
 import { LoggerService } from './query/get-all-permissions/logger';
+import { SaEmailIpWhitelistConstant } from '../../guard/list';
 
 @Module({
   controllers: [PermissionsController],
@@ -15,6 +16,7 @@ import { LoggerService } from './query/get-all-permissions/logger';
     PaginationService,
     SearchService,
     SortService,
+    SaEmailIpWhitelistConstant,
   ],
   exports: [PermissionsService],
 })

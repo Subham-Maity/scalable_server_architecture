@@ -11,6 +11,7 @@ import {
   Put,
   HttpException,
   Query,
+  UseGuards,
 } from '@nestjs/common';
 import { PermissionsService } from './permissions.service';
 import { CreatePermissionDto, GetAllPermissionsDto, UpdatePermissionDto } from './dto';
@@ -29,12 +30,13 @@ import {
   ApiBadRequestResponse,
   ApiQuery,
 } from '@nestjs/swagger';
+import { SuperAdminGuard } from '../../guard';
 
 @ApiTags('🪪 Permissions')
 @Controller('permissions')
 export class PermissionsController {
   constructor(private readonly permissionsService: PermissionsService) {}
-
+  @UseGuards(SuperAdminGuard)
   @Post()
   @HttpCode(HttpStatus.CREATED)
   @ApiOperation({ summary: 'Create a new permission' })
@@ -174,6 +176,7 @@ export class PermissionsController {
       throw new HttpException(error.message, HttpStatus.NOT_FOUND);
     }
   }
+  @UseGuards(SuperAdminGuard)
   @Put(':id')
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Update a permission by ID' })
@@ -210,7 +213,7 @@ export class PermissionsController {
       throw new HttpException(error.message, HttpStatus.BAD_REQUEST);
     }
   }
-
+  @UseGuards(SuperAdminGuard)
   @Delete(':id')
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Delete a permission by ID' })

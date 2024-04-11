@@ -10,6 +10,7 @@ import {
   BadRequestException,
   InternalServerErrorException,
   NotFoundException,
+  UseGuards,
 } from '@nestjs/common';
 import { ConfigId } from '../../../../types';
 import { PermissionsService } from '../permissions/permissions.service';
@@ -31,6 +32,7 @@ import {
   ApiBadRequestResponse,
 } from '@nestjs/swagger';
 import { RelationsService } from './relations.service';
+import { AdminGuard } from '../../guard';
 
 @ApiTags('💝 Relations')
 @Controller('relations')
@@ -39,7 +41,7 @@ export class RelationsController {
     private readonly relationsService: RelationsService,
     private readonly permissionsService: PermissionsService,
   ) {}
-
+  @UseGuards(AdminGuard)
   @Patch('permissions-to/:roleId')
   @ApiOperation({ summary: 'Assign permissions to a role' })
   @ApiParam({ name: 'roleId', description: 'The role ID', required: true })
@@ -80,7 +82,7 @@ export class RelationsController {
       throw new HttpException(error.message, HttpStatus.BAD_REQUEST);
     }
   }
-
+  @UseGuards(AdminGuard)
   @Put('permissions-to/:roleId')
   @ApiOperation({ summary: 'Update permissions for a role' })
   @ApiParam({ name: 'roleId', description: 'The role ID', required: true })
@@ -121,7 +123,7 @@ export class RelationsController {
       throw new HttpException(error.message, HttpStatus.BAD_REQUEST);
     }
   }
-
+  @UseGuards(AdminGuard)
   @Delete('permissions-to/:roleId')
   @ApiOperation({ summary: 'Remove permissions from a role' })
   @ApiParam({ name: 'roleId', description: 'The role ID', required: true })

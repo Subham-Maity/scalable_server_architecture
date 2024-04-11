@@ -17,6 +17,28 @@ export class RolesService {
     private searchService: SearchService,
     private sortService: SortService,
   ) {}
+  createAdminRole = asyncErrorHandler(async (): Promise<Role> => {
+    const existingAdminRole = await this.prisma.role.findUnique({
+      where: { name: 'Admin' },
+    });
+
+    if (existingAdminRole) {
+      throw new BadRequestException('Admin role already exists.');
+    }
+
+    const newAdminRole = await this.prisma.role.create({
+      data: {
+        name: 'Admin',
+        description: 'Can do everything',
+      },
+    });
+
+    // Clear the cache for roles
+    await this.redisService.delPatternSpecific(roles_key_prefix_for_redis);
+    Logger.debug(`fn: createAdminRole, Cache cleared for pattern ${roles_key_prefix_for_redis}*`);
+
+    return newAdminRole;
+  });
 
   createRole = asyncErrorHandler(async (name: string, description?: string): Promise<Role> => {
     if (!name) {
@@ -31,7 +53,7 @@ export class RolesService {
     });
 
     // Clear the cache for roles
-    await this.redisService.delPattern(roles_key_prefix_for_redis);
+    await this.redisService.delPatternSpecific(roles_key_prefix_for_redis);
     Logger.debug(`fn: createRole, Cache cleared for pattern ${roles_key_prefix_for_redis}*`);
 
     return newRole;
@@ -70,7 +92,7 @@ export class RolesService {
     }
 
     try {
-      await this.redisService.set(cacheKey, roles, 500);
+      await this.redisService.set(cacheKey, roles, 5000);
     } catch (error) {
       Logger.error('fn: getRoles, Error setting data to Redis', error);
     }
@@ -82,6 +104,20 @@ export class RolesService {
       throw new BadRequestException('Invalid role ID.');
     }
 
+    const cacheKey = `${roles_key_prefix_for_redis}${id}`;
+
+    try {
+      const cachedRole = await this.redisService.get(cacheKey);
+      if (cachedRole) {
+        Logger.debug(`fn: getRoleById, Cache hit for ${cacheKey}`);
+        return cachedRole as Role;
+      }
+    } catch (error) {
+      Logger.error(`fn: getRoleById, Error getting data from Redis for key ${cacheKey}`, error);
+    }
+
+    Logger.error(`fn: getRoleById, Cache miss`);
+
     const role = await this.prisma.role.findUnique({
       where: { id },
       include: {
@@ -91,6 +127,12 @@ export class RolesService {
 
     if (!role) {
       throw new NotFoundException(`Role with ID ${id} not found.`);
+    }
+
+    try {
+      await this.redisService.set(cacheKey, role, 5000);
+    } catch (error) {
+      Logger.error('fn: getRoleById, Error setting data to Redis', error);
     }
 
     return role;
@@ -112,7 +154,7 @@ export class RolesService {
       }
 
       // Clear the cache for roles
-      await this.redisService.delPattern(roles_key_prefix_for_redis);
+      await this.redisService.delPatternSpecific(roles_key_prefix_for_redis);
       Logger.debug(`fn: updateRoleName, Cache cleared for pattern ${roles_key_prefix_for_redis}*`);
 
       return updatedRole;
@@ -130,7 +172,7 @@ export class RolesService {
     ]);
 
     // Clear the cache for roles
-    await this.redisService.delPattern(roles_key_prefix_for_redis);
+    await this.redisService.delPatternSpecific(roles_key_prefix_for_redis);
     Logger.debug(`fn: deleteRole, Cache cleared for pattern ${roles_key_prefix_for_redis}*`);
 
     return deletedRole;

@@ -63,7 +63,7 @@ export class UserService {
     const sanitizedUser = sanitize(user, ['hash']);
 
     try {
-      await this.redisService.set(cacheKey, sanitizedUser, 500);
+      await this.redisService.set(cacheKey, sanitizedUser, 5000);
     } catch (error) {
       Logger.error('fn: getUserById, Error setting data to Redis', error);
     }
@@ -111,7 +111,7 @@ export class UserService {
 
     /**____SET_Redis____*/
     try {
-      await this.redisService.set(cacheKey, sanitizedUsers, 500);
+      await this.redisService.set(cacheKey, sanitizedUsers, 5000);
     } catch (error) {
       Logger.error('fn: getAllUsers, Error setting data to Redis', error);
     }
