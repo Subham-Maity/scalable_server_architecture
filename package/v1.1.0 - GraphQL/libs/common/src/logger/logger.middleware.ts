@@ -1,4 +1,9 @@
-import { Injectable, Logger, LoggerService, NestMiddleware } from '@nestjs/common';
+import {
+  Injectable,
+  Logger,
+  LoggerService,
+  NestMiddleware,
+} from '@nestjs/common';
 import { NextFunction, Request, Response } from 'express';
 import { v4 as uuidv4 } from 'uuid';
 

@@ -1,3 +1,0 @@
-- Need to add username also
- - signin.dto.ts
- - prisma.schema
