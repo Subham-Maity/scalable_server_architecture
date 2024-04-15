@@ -1,0 +1,3 @@
+```bash
+yarn add @apollo/gateway @apollo/subgraph @nestjs/apollo @nestjs/graphql apollo-server-express graphql @nestjs-modules/mailer @nestjs/bull @nestjs/cache-manager @nestjs/common @nestjs/config @nestjs/core @nestjs/jwt @nestjs/mongoose @nestjs/passport @nestjs/swagger @nestjs/throttler @prisma/client @nestjs/cli prisma argon2 axios bull cache-manager cache-manager-redis-store class-transformer class-validator cookie-parser googleapis graphql handlebars helmet ioredis joi mongoose nodemailer passport passport-jwt @nestjs/microservices
+```
