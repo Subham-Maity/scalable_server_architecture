@@ -1,38 +1,41 @@
-import {
-  Injectable,
-  Logger,
-  LoggerService,
-  NestMiddleware,
-} from '@nestjs/common';
+import { Injectable, NestMiddleware } from '@nestjs/common';
 import { NextFunction, Request, Response } from 'express';
-import { v4 as uuidv4 } from 'uuid';
+
+const colorCombinations = [
+  '\x1b[31m', // Red
+  '\x1b[32m', // Green
+  '\x1b[33m', // Yellow
+  '\x1b[34m', // Blue
+  '\x1b[35m', // Magenta
+  '\x1b[36m', // Cyan
+  '\x1b[37m', // White
+  '\x1b[38;5;208m', // Orange
+];
 
 @Injectable()
 export class LoggerMiddleware implements NestMiddleware {
-  private readonly logger: LoggerService;
   private requestNumber = 0;
 
-  constructor() {
-    this.logger = new Logger('HTTP');
-  }
-
   use(request: Request, response: Response, next: NextFunction): void {
-    const requestId = uuidv4();
     this.requestNumber++;
-    const { ip, method, originalUrl, headers, body, protocol } = request;
+    const { ip, method, originalUrl, headers, body, protocol, httpVersion } =
+      request;
     const userAgent = request.get('user-agent') || '';
 
-    this.logger.log(
-      `[${requestId}][#${this.requestNumber}] ${method} ${originalUrl} - ${userAgent} ${ip} - ${protocol}`,
-      LoggerMiddleware.name,
+    const now = new Date();
+    const dateTime = now.toLocaleString('en-GB', { hour12: true });
+
+    const numberColor =
+      colorCombinations[(this.requestNumber - 1) % colorCombinations.length];
+
+    console.log(
+      `\x1b[34m[#${numberColor}${this.requestNumber}\x1b[34m] \x1b[0m\x1b[34m⇝⫸\x1b[0m \x1b[33m${method}\x1b[0m \x1b[34m${originalUrl}\x1b[0m \x1b[34m⇝⫸\x1b[0m \x1b[32m${userAgent}\x1b[34m⇝⫸\x1b[0m \x1b[32m${ip}\x1b[0m \x1b[34m⇝⫸\x1b[0m ${protocol} \x1b[34m⇝⫸\x1b[0m HTTP/${httpVersion} \x1b[34m⇝⫸\x1b[0m \x1b[35m${dateTime}\x1b[0m \x1b[34m⇝⫸\x1b[0m`,
     );
-    this.logger.debug(
-      `[${requestId}][#${this.requestNumber}] Headers: ${JSON.stringify(headers)}`,
-      LoggerMiddleware.name,
+    console.log(
+      `\x1b[34m[#${numberColor}${this.requestNumber}\x1b[34m] \x1b[0m\x1b[34m⇝⫸\x1b[0m Headers: ${JSON.stringify(headers)} \x1b[34m⇝⫸\x1b[0m`,
     );
-    this.logger.debug(
-      `[${requestId}][#${this.requestNumber}] Body: ${JSON.stringify(body)}`,
-      LoggerMiddleware.name,
+    console.log(
+      `\x1b[34m[#${numberColor}${this.requestNumber}\x1b[34m] \x1b[0m\x1b[34m⇝⫸\x1b[0m Body: ${JSON.stringify(body)} \x1b[34m⇝⫸\x1b[0m`,
     );
 
     const start = Date.now();
@@ -44,9 +47,15 @@ export class LoggerMiddleware implements NestMiddleware {
       const end = Date.now();
       const latency = end - start;
 
-      this.logger.log(
-        `[${requestId}][#${this.requestNumber}] ${method} ${originalUrl} ${statusCode} ${contentLength} - ${userAgent} ${ip} - ${latency}ms`,
-        LoggerMiddleware.name,
+      const latencyColor =
+        latency <= 300
+          ? '\x1b[32m' // Green
+          : latency <= 1000
+            ? '\x1b[33m' // Yellow
+            : '\x1b[31m'; // Red
+
+      console.log(
+        `\x1b[34m[#${numberColor}${this.requestNumber}\x1b[34m] \x1b[0m\x1b[34m⇝⫸\x1b[0m \x1b[33m${method}\x1b[0m \x1b[34m${originalUrl}\x1b[0m ${statusCode} ${contentLength} \x1b[34m⇝⫸\x1b[0m \x1b[32m${userAgent}\x1b[0m \x1b[34m⇝⫸\x1b[0m \x1b[32m${ip}\x1b[0m \x1b[34m⇝⫸\x1b[0m ${latencyColor}+${latency}ms\x1b[0m \x1b[1m\x1b[35m[END]\x1b[0m`,
       );
     });
 
